@@ -1,0 +1,170 @@
+from django.shortcuts import render
+
+# Create your views here.
+# accounts/views.py
+
+from rest_framework import viewsets, status, generics
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth import get_user_model
+from .models import User, AadhaarProfile
+from .serializers import (
+    UserSerializer, UserDetailSerializer, AadhaarProfileSerializer
+)
+from .services import RegistrationService
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'register_with_aadhaar' or self.action == 'create':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def register_with_aadhaar(self, request):
+        """Register user with Aadhaar and biometric data"""
+        try:
+            # First create the user
+            user_data = {
+                'username': request.data.get('username'),
+                'password': request.data.get('password'),  # Make sure password is included
+                'email': request.data.get('email'),
+                'first_name': request.data.get('first_name'),
+                'middle_name': request.data.get('middle_name'),
+                'profile_picture': request.data.get('profile_picture'),
+                'last_name': request.data.get('last_name'),
+                'phone_number': request.data.get('phone_number'),
+                'role': request.data.get('role', 'CITIZEN'),
+                'address': request.data.get('address'),
+                'city': request.data.get('city'),
+                'state': request.data.get('state'),
+                'pincode': request.data.get('pincode'),
+                'latitude': request.data.get('latitude'),
+                'longitude': request.data.get('longitude'),
+                'dob': request.data.get('dob'),
+                'gender': request.data.get('gender'),
+            }
+            
+
+            # Validate password
+            if not user_data.get('password'):
+                return Response(
+                    {'error': 'Password is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user_serializer = UserSerializer(data=user_data)
+            if not user_serializer.is_valid():
+                return Response(
+                    user_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user = user_serializer.save()
+            refresh = RefreshToken.for_user(user)
+            # Process biometric registration
+            aadhaar_image = request.FILES.get('aadhaar_image')
+            profile_picture = request.FILES.get('profile_picture')
+            fingerprint = request.FILES.get('fingerprint')
+            
+            # Validate required files
+            if not aadhaar_image:
+                return Response(
+                    {'error': 'Aadhaar image is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not profile_picture:
+                return Response(
+                    {'error': 'profile_picture is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate file types
+            allowed_types = ['image/jpeg', 'image/png']
+            if aadhaar_image.content_type not in allowed_types:
+                return Response(
+                    {'error': 'Aadhaar image must be JPEG or PNG'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if profile_picture.content_type not in allowed_types:
+                return Response(
+                    {'error': 'profile_picture must be JPEG or PNG'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if fingerprint and fingerprint.content_type not in allowed_types:
+                return Response(
+                    {'error': 'Fingerprint must be JPEG or PNG'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                aadhaar_profile = RegistrationService.process_registration(
+                    user,
+                    aadhaar_image,
+                    profile_picture,
+                    fingerprint
+                )
+                
+                # Generate tokens
+                refresh = RefreshToken.for_user(user)
+                tokens = {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                }
+                
+                response_data = {
+                    'user': UserSerializer(user).data,
+                    'tokens': tokens,
+                    'aadhaar_profile': AadhaarProfileSerializer(aadhaar_profile).data,
+                    'message': 'User registered successfully with biometric data'
+                }
+                
+            except Exception as e:
+                user.delete()  # Clean up if biometric registration fails
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Clean up if registration fails
+            if 'user' in locals():
+                user.delete()
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        serializer = UserDetailSerializer(request.user)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return UserDetailSerializer
+        return UserSerializer
+
+    @action(detail=True, methods=['post'])
+    def verify_aadhaar(self, request, pk=None):
+        user = self.get_object()
+        # Implement Aadhaar verification logic here
+        return Response({'status': 'verification initiated'})
+
+class AadhaarProfileViewSet(viewsets.ModelViewSet):
+    queryset = AadhaarProfile.objects.all()
+    serializer_class = AadhaarProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
