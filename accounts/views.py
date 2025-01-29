@@ -4,10 +4,10 @@ from django.shortcuts import render
 # accounts/views.py
 
 from rest_framework import viewsets, status, generics
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
 from .serializers import (
     UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
@@ -238,3 +238,57 @@ class FamilyViewSet(viewsets.ModelViewSet):
         members = FamilyMember.objects.filter(family=family)
         serializer = FamilyMemberSerializer(members, many=True)
         return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_user(request):
+    """
+    Login API that returns JWT tokens and user data
+    """
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        # Validate input
+        if not username or not password:
+            return Response(
+                {'error': 'Please provide both username and password'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Authenticate user
+        user = authenticate(username=username, password=password)
+
+        if user is None:
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if not user.is_active:
+            return Response(
+                {'error': 'User account is disabled'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        
+        # Get user data
+        user_serializer = UserSerializer(user)
+
+        # Return response with tokens and user data
+        return Response({
+            'message': 'Login successful',
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            },
+            'user': user_serializer.data
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

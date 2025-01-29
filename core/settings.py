@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 from decouple import config
+from corsheaders.defaults import default_headers
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,19 +29,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '127.0.0.1:8000', '*']
 
 AUTH_USER_MODEL = 'accounts.User'
 
 PORT = int(os.environ.get('PORT', 8000))
 
-CORS_ORIGIN_ALLOW_ALL = True
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",
+    "https://*.ngrok-free.app",  # Trust all ngrok subdomains
+]
+
+# CORS Settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:8000",
     "http://localhost:5173",
+    "https://*.ngrok-free.app",
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-requested-with",
+    "x-csrftoken",
 ]
 
 # Application definition
@@ -108,7 +124,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -141,6 +156,17 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'your_db_name',
+#         'USER': 'your_username',
+#         'PASSWORD': 'your_password',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
 DATABASE_URL = os.getenv('DATABASE_URL', None)
 if DATABASE_URL:
@@ -239,17 +265,21 @@ SUMMERNOTE_CONFIG = {
 }
 
 # Whitenoise settings
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Security settings
-SECURE_SSL_REDIRECT = os.getenv('ENVIRONMENT') == 'production'
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
-CSRF_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
+# # Security settings
+# SECURE_SSL_REDIRECT = os.getenv('ENVIRONMENT') == 'production'
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SESSION_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
+# CSRF_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
 
-# CORS settings if needed
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
-CORS_ALLOWED_ORIGINS = [
-    "https://ru-backend.onrender.com",
-]
+# For development only - be careful with this in production
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+
+# Cookie settings
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 

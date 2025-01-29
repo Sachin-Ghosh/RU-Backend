@@ -1,6 +1,19 @@
 from django.db import models
+# from django.contrib.gis.db import models as gis_models
+# from django.contrib.gis.geos import Point
+# from django.contrib.gis.measure import D
 # from django.contrib.postgres.fields import ArrayField
 from accounts.models import User
+import os
+from django.conf import settings
+
+def document_upload_path(instance, filename):
+    # Generate path for document uploads
+    return f'documents/{instance.missing_person.case_number}/{filename}'
+
+def photo_upload_path(instance, filename):
+    # Generate path for photo uploads
+    return f'photos/{instance.case_number}/{filename}'
 
 class MissingPerson(models.Model):
     GENDER_CHOICES = [
@@ -13,7 +26,7 @@ class MissingPerson(models.Model):
         ('MISSING', 'Missing'),
         ('FOUND', 'Found'),
         ('INVESTIGATING', 'Under Investigation'),
-        ('RESOLVED', 'Case Resolved'),
+        ('CLOSED', 'Case Closed'),
     ]
 
     BLOOD_GROUP_CHOICES = [
@@ -51,7 +64,7 @@ class MissingPerson(models.Model):
     physical_attributes = models.JSONField(default=dict)  # Store additional attributes
     
     # Images and Biometric Data
-    recent_photo = models.ImageField(upload_to='missing_persons/photos/')
+    recent_photo = models.ImageField(upload_to=photo_upload_path, null=True, blank=True)
     additional_photos = models.JSONField(default=list)  # Store multiple photo URLs
     facial_encoding = models.JSONField(null=True)  # Store facial recognition data
     
@@ -69,7 +82,12 @@ class MissingPerson(models.Model):
     priority_level = models.IntegerField(default=1)  # 1 (low) to 5 (high)
     
     # Relations
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reported_cases')
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='reported_persons'
+    )
     assigned_officer = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -104,7 +122,8 @@ class MissingPerson(models.Model):
         'accounts.FamilyGroup',
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name='missing_persons'
     )
     family_member = models.ForeignKey(
         'accounts.FamilyMember',
@@ -142,9 +161,28 @@ class MissingPerson(models.Model):
         help_text='Confidence score from facial recognition'
     )
     
+    # New fields for location
+    last_known_latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    last_known_longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    aadhaar_number = models.CharField(max_length=12, blank=True, null=True)
+    aadhaar_photo = models.ImageField(
+        upload_to='aadhaar_photos', blank=True, null=True
+    )
+    
+    # def save(self, *args, **kwargs):
+    #     if self.last_known_latitude and self.last_known_longitude:
+    #         self.location = Point(
+    #             float(self.last_known_longitude),
+    #             float(self.last_known_latitude)
+    #         )
+    #     super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Missing Person'
-
         verbose_name_plural = 'Missing Persons'
         ordering = ['-created_at']
 
@@ -165,12 +203,8 @@ class MissingPersonDocument(models.Model):
         max_length=20,
         choices=DOCUMENT_TYPES
     )
-    document = models.FileField(
-        upload_to='missing_persons/documents/',
-        null=True,
-        blank=True
-    )
     description = models.TextField(blank=True)
+    file = models.FileField(upload_to=document_upload_path, null=True, blank=True)
     uploaded_by = models.ForeignKey(
         'accounts.User',
         on_delete=models.SET_NULL,

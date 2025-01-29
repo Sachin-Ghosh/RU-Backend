@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from django.db.models import Q
+from django.db.models import Q, F
 import tempfile
 import os
 from datetime import datetime
 import json
 import random
+from math import radians, cos, sin, asin, sqrt
 
 # Create your views here.
 
@@ -15,19 +16,24 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import MissingPerson, MissingPersonDocument
 from .serializers import MissingPersonSerializer, MissingPersonDocumentSerializer
-from deepface import DeepFace
 from blockchain.services import BlockchainService
 from blockchain.models import Block
 from .services import BiometricService, MissingPersonService
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.core.files.base import ContentFile
+import base64
+# from django.contrib.gis.geos import Point
+# from django.contrib.gis.db.models.functions import Distance
+import numpy as np
+from accounts.models import FamilyMember, FamilyGroup
 
 class MissingPersonViewSet(viewsets.ModelViewSet):
     queryset = MissingPerson.objects.all()
     serializer_class = MissingPersonSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['status', 'gender', 'city', 'state']
-    search_fields = ['name', 'case_number', 'description']
+    filterset_fields = ['status', 'gender']
+    search_fields = ['name', 'case_number', 'aadhaar_number']
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_queryset(self):
@@ -41,116 +47,276 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'detail_search']:
+            return MissingPersonSerializer
+        return MissingPersonSerializer
+
     def create(self, request, *args, **kwargs):
         try:
-            data = request.data.copy()
+            print("Files in request:", request.FILES)  # Debug print
+            
+            # Create a new dict for data
+            data = {}
+            
+            # Separate files and data
+            for key, value in request.data.items():
+                if not key.startswith('documents[') and not hasattr(value, 'read'):
+                    data[key] = value
 
-            # Handle JSON string fields
-            json_fields = ['physical_attributes', 'last_seen_wearing', 'possible_locations']
-            for field in json_fields:
+            # Generate case number
+            case_number = f"MP{''.join(random.choices('0123456789ABCDEF', k=8))}"
+            data['case_number'] = case_number
+
+            # Handle JSON fields
+            for field in ['physical_attributes', 'possible_locations']:
                 if field in data and isinstance(data[field], str):
                     try:
                         data[field] = json.loads(data[field])
                     except json.JSONDecodeError:
-                        continue
+                        pass
 
-            # Handle comma-separated strings
-            list_fields = ['medical_conditions', 'medications', 'possible_locations']
-            for field in list_fields:
-                if field in data and isinstance(data[field], str):
-                    if data[field].startswith('['):
-                        try:
-                            data[field] = json.loads(data[field])
-                        except json.JSONDecodeError:
-                            data[field] = [x.strip() for x in data[field].split(',')]
-                    else:
-                        data[field] = [x.strip() for x in data[field].split(',')]
-
-            # Remove document fields from main data
-            documents_data = []
-            for key in list(data.keys()):
-                if key.startswith('documents['):
-                    idx = int(key.split('[')[1].split(']')[0])
-                    while len(documents_data) <= idx:
-                        documents_data.append({})
-                    field = key.split('][')[1].split(']')[0]
-                    documents_data[idx][field] = data[key]
-                    del data[key]
-
-            # Create missing person record
+            # Create missing person first
             serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             missing_person = serializer.save(
                 reporter=request.user,
-                case_number=self.generate_case_number()
+                case_number=case_number
             )
 
-            # Create documents
-            for doc_data in documents_data:
-                if doc_data:
-                    MissingPersonDocument.objects.create(
-                        missing_person=missing_person,
-                        document_type=doc_data.get('document_type'),
-                        description=doc_data.get('description', ''),
-                        uploaded_by=request.user
-                    )
+            # Handle documents
+            document_indices = set()
+            for key in request.data.keys():
+                if key.startswith('documents['):
+                    idx = int(key.split('[')[1].split(']')[0])
+                    document_indices.add(idx)
 
-            # Refresh the instance to get updated data
-            missing_person.refresh_from_db()
-            
+            print("Document indices found:", document_indices)  # Debug print
+
+            for idx in document_indices:
+                doc_type = request.data.get(f'documents[{idx}][document_type]')
+                doc_desc = request.data.get(f'documents[{idx}][description]')
+                # Check both possible file keys
+                doc_file = (
+                    request.FILES.get(f'documents[{idx}][file]') or 
+                    request.FILES.get(f'documents[{idx}][document]')
+                )
+
+                print(f"Processing document {idx}:")  # Debug print
+                print(f"Type: {doc_type}")
+                print(f"Description: {doc_desc}")
+                print(f"File: {doc_file}")
+
+                if doc_type and doc_desc and doc_file:
+                    try:
+                        document = MissingPersonDocument.objects.create(
+                            missing_person=missing_person,
+                            document_type=doc_type,
+                            description=doc_desc,
+                            file=doc_file,
+                            uploaded_by=request.user
+                        )
+                        print(f"Document created: {document.id}")  # Debug print
+                    except Exception as e:
+                        print(f"Error creating document: {str(e)}")  # Debug print
+
+            # Handle recent photo
+            if 'recent_photo' in request.FILES:
+                missing_person.recent_photo = request.FILES['recent_photo']
+                missing_person.save()
+
+            # Handle additional photos if any
+            if 'additional_photos' in request.FILES:
+                # You might want to handle additional photos here
+
+            # Refresh instance to get updated data
+                missing_person.refresh_from_db()
             return Response(
-                MissingPersonSerializer(missing_person).data,
+                self.get_serializer(missing_person).data,
                 status=status.HTTP_201_CREATED
             )
 
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             return Response(
-                {'error': str(e), 'detail': getattr(e, 'detail', str(e))},
+                {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def generate_case_number(self):
-        """Generate unique case number"""
-        prefix = 'MP'
-        random_suffix = ''.join(random.choices('0123456789ABCDEF', k=8))
-        return f"{prefix}{random_suffix}"
+    @action(detail=False, methods=['GET'])
+    def search(self, request):
+        """Search missing persons by various parameters"""
+        query = request.query_params.get('query', '')
+        status = request.query_params.get('status')
+        area = request.query_params.get('area')
 
-    def perform_create(self, serializer):
-        instance = serializer.save(reporter=self.request.user)
-        biometric_service = BiometricService()
-        
-        # Process biometric data
-        if instance.recent_photo:
+        queryset = self.get_queryset()
+
+        if query:
+            queryset = queryset.filter(
+                Q(name__icontains=query) |
+                Q(case_number__icontains=query) |
+                Q(aadhaar_number__icontains=query)
+            )
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        if area:
+            queryset = queryset.filter(
+                Q(last_seen_location__icontains=area)
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def haversine_distance(self, lat1, lon1, lat2, lon2):
+        """
+        Calculate the great circle distance between two points 
+        on the earth (specified in decimal degrees)
+        """
+        try:
+            # Convert decimal degrees to radians
+            lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+            lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+            # Haversine formula
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            c = 2 * asin(sqrt(a))
+            r = 6371  # Radius of earth in kilometers
+            return c * r
+        except Exception as e:
+            print(f"Error calculating distance: {str(e)}")
+            return float('inf')
+
+    @action(detail=False, methods=['GET'])
+    def nearby(self, request):
+        """Find missing persons within a radius"""
+        try:
+            lat = float(request.query_params.get('latitude'))
+            lon = float(request.query_params.get('longitude'))
+            radius = float(request.query_params.get('radius', 2.0))  # km
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Invalid latitude, longitude, or radius'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get all missing persons with location data
+        queryset = MissingPerson.objects.exclude(
+            last_known_latitude__isnull=True
+        ).exclude(
+            last_known_longitude__isnull=True
+        )
+
+        # Calculate distances and filter
+        nearby_persons = []
+        for person in queryset:
             try:
-                # Extract and analyze facial features
-                facial_features = biometric_service.extract_facial_features(
-                    instance.recent_photo.path
+                distance = self.haversine_distance(
+                    lat, lon,
+                    float(person.last_known_latitude),
+                    float(person.last_known_longitude)
                 )
-                
-                # Store in blockchain
-                blockchain_data = {
-                    'type': 'missing_person_registration',
-                    'case_number': instance.case_number,
-                    'facial_features': facial_features.tolist(),
-                    'timestamp': instance.created_at.isoformat()
-                }
-                BlockchainService.add_block(blockchain_data, data_type='biometric')
-                
+                if distance <= radius:
+                    person.distance = distance  # Store distance as float
+                    nearby_persons.append(person)
             except Exception as e:
-                print(f"Error processing biometric data: {str(e)}")
+                print(f"Error processing person {person.id}: {str(e)}")
+                continue
 
-    @action(detail=True, methods=['post'])
+        # Sort by distance
+        nearby_persons.sort(key=lambda x: x.distance)
+        
+        serializer = self.get_serializer(nearby_persons, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='face-search')
+    def face_search(self, request):
+        """Search for missing persons using facial recognition"""
+        if 'photo' not in request.FILES:
+            return Response(
+                {'error': 'Photo is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        search_photo = request.FILES['photo']
+        matches = []
+
+        # Save the uploaded photo temporarily
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            for chunk in search_photo.chunks():
+                temp_file.write(chunk)
+            temp_path = temp_file.name
+
+        try:
+            # Get all missing persons with photos
+            persons = MissingPerson.objects.exclude(recent_photo='')
+
+            for person in persons:
+                try:
+                    result = DeepFace.verify(
+                        temp_path,
+                        person.recent_photo.path,
+                        model_name='VGG-Face'
+                    )
+                    
+                    if result['verified']:
+                        matches.append({
+                            'person_id': person.id,
+                            'name': person.name,
+                            'case_number': person.case_number,
+                            'confidence': result['distance']
+                        })
+                except Exception as e:
+                    print(f"Error processing {person.id}: {str(e)}")
+
+        finally:
+            # Clean up the temporary file
+            os.unlink(temp_path)
+
+        return Response({'matches': matches})
+
+    @action(detail=True, methods=['PATCH'])
     def update_status(self, request, pk=None):
+        """Update the status of a missing person case"""
         instance = self.get_object()
         status = request.data.get('status')
-        if status in dict(MissingPerson.STATUS_CHOICES):
-            instance.status = status
-            instance.save()
-            return Response({'status': 'updated'})
-        return Response(
-            {'error': 'Invalid status'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        
+        if status not in dict(MissingPerson.STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        instance.status = status
+        instance.save()
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['POST'])
+    def update_location(self, request, pk=None):
+        """Update the last known location of a missing person"""
+        instance = self.get_object()
+        lat = request.data.get('latitude')
+        lon = request.data.get('longitude')
+
+        if not all([lat, lon]):
+            return Response(
+                {'error': 'Latitude and longitude are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        instance.last_known_latitude = lat
+        instance.last_known_longitude = lon
+        instance.save()
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
     def match_biometrics(self, request):
@@ -244,68 +410,75 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
-    @action(detail=False, methods=['post'])
-    def search(self, request):
-        """Search for missing persons using various criteria"""
-        search_type = request.data.get('search_type')
-        search_value = request.data.get('search_value')
+    @action(detail=False, methods=['GET'], url_path='detail-search')
+    def detail_search(self, request):
+        """
+        Search for a missing person with detailed information including family data.
+        """
+        # Get query parameters
+        case_number = request.query_params.get('case_number')
+        name = request.query_params.get('name')
+        aadhaar = request.query_params.get('aadhaar')
+        phone = request.query_params.get('phone')
+        location = request.query_params.get('location')
+
+        # Start with all persons
+        queryset = MissingPerson.objects.all()
+
+        # Build query based on provided parameters
+        filters = Q()
         
-        if search_type == 'name':
-            results = MissingPersonService.search_by_name(search_value)
-        elif search_type == 'aadhaar':
-            results = MissingPersonService.search_by_aadhaar(search_value)
-        elif search_type == 'photo':
-            # Handle photo upload and matching
-            photo = request.FILES.get('photo')
-            if not photo:
-                return Response(
-                    {'error': 'Photo is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-                
-            # Save photo temporarily
-            with tempfile.NamedTemporaryFile(delete=False) as temp_photo:
-                for chunk in photo.chunks():
-                    temp_photo.write(chunk)
-                    
-            try:
-                matches = MissingPersonService.match_faces(temp_photo.name)
-                results = [match['person'] for match in matches]
-            finally:
-                os.unlink(temp_photo.name)
-        else:
+        if case_number:
+            filters |= Q(case_number__iexact=case_number)
+        
+        if name:
+            filters |= (Q(name__icontains=name) | 
+                       Q(family_group__members__name__icontains=name))
+        
+        if aadhaar:
+            filters |= (Q(aadhaar_number__iexact=aadhaar) | 
+                       Q(family_group__members__aadhaar_number__iexact=aadhaar))
+        
+        if phone:
+            filters |= (Q(emergency_contact_phone__icontains=phone) |
+                       Q(secondary_contact_phone__icontains=phone) |
+                       Q(family_group__members__contact_number__icontains=phone))
+        
+        if location:
+            filters |= (Q(last_seen_location__icontains=location) |
+                       Q(possible_locations__icontains=location))
+
+        # If no search parameters provided
+        if not any([case_number, name, aadhaar, phone, location]):
             return Response(
-                {'error': 'Invalid search type'},
+                {'error': 'Please provide at least one search parameter'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-            
-        return Response(
-            MissingPersonSerializer(results, many=True).data
+
+        # Apply filters
+        queryset = queryset.filter(filters).distinct()
+
+        # Optimize query
+        queryset = queryset.select_related('family_group').prefetch_related(
+            'documents',
+            'family_group__members'
         )
 
-    @action(detail=True, methods=['post'])
-    def update_location(self, request, pk=None):
-        """Update last known location of missing person"""
-        missing_person = self.get_object()
-        
-        latitude = request.data.get('latitude')
-        longitude = request.data.get('longitude')
-        timestamp = request.data.get('timestamp', datetime.now())
-        
-        if not all([latitude, longitude]):
+        # Get results
+        if not queryset.exists():
             return Response(
-                {'error': 'Latitude and longitude are required'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'message': 'No matching records found'},
+                status=status.HTTP_404_NOT_FOUND
             )
-            
-        MissingPersonService.update_location(
-            missing_person,
-            latitude,
-            longitude,
-            timestamp
-        )
-        
-        return Response({'status': 'Location updated'})
+
+        # Serialize the results
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 class MissingPersonDocumentViewSet(viewsets.ModelViewSet):
     queryset = MissingPersonDocument.objects.all()
