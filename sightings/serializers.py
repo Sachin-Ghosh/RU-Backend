@@ -2,26 +2,42 @@
 
 from rest_framework import serializers
 from .models import Sighting
+from missing_persons.models import MissingPerson
 
 class SightingSerializer(serializers.ModelSerializer):
-    reporter_name = serializers.CharField(source='reporter.get_full_name', read_only=True)
-    missing_person_name = serializers.CharField(
-        source='missing_person.name',
-        read_only=True
-    )
-    verified_by_name = serializers.CharField(
-        source='verified_by.get_full_name',
-        read_only=True
-    )
+    reporter_name = serializers.SerializerMethodField()
+    missing_person_name = serializers.SerializerMethodField()
+    verified_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Sighting
-        fields = '__all__'
-        read_only_fields = (
+        fields = [
+            'id', 'missing_person', 'missing_person_name', 
+            'reporter', 'reporter_name', 'timestamp',
+            'location', 'latitude', 'longitude',
+            'location_details', 'direction_headed',
+            'description', 'wearing', 'accompanied_by',
+            'photo', 'additional_photos', 'video',
+            'verification_status', 'verified_by', 'verified_by_name',
+            'verification_notes', 'confidence_level',
+            'facial_match_confidence', 'ml_analysis_results',
+            'created_at', 'updated_at', 'ip_address',
+            'device_info'
+        ]
+        read_only_fields = [
             'reporter', 'facial_match_confidence',
-            'ml_analysis_results', 'created_at', 'updated_at',
-            'ip_address', 'device_info'
-        )
+            'created_at', 'updated_at', 'ip_address',
+            'device_info', 'verified_by', 'verified_by_name'
+        ]
+
+    def get_reporter_name(self, obj):
+        return obj.reporter.get_full_name() if obj.reporter else None
+
+    def get_missing_person_name(self, obj):
+        return obj.missing_person.name if obj.missing_person else None
+
+    def get_verified_by_name(self, obj):
+        return obj.verified_by.get_full_name() if obj.verified_by else None
 
     def create(self, validated_data):
         # Add IP address and device info from request

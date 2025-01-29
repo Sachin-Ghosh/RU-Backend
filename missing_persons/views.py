@@ -22,6 +22,7 @@ from .services import BiometricService, MissingPersonService
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.core.files.base import ContentFile
 import base64
+from deepface import DeepFace
 # from django.contrib.gis.geos import Point
 # from django.contrib.gis.db.models.functions import Distance
 import numpy as np
