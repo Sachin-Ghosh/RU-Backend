@@ -97,8 +97,8 @@ class MissingPersonAdmin(admin.ModelAdmin):
 class MissingPersonDocumentAdmin(admin.ModelAdmin):
     list_display = (
         'missing_person', 'document_type',
-        'uploaded_by', 'uploaded_at', 'is_verified'
+        'uploaded_by', 'uploaded_at',   
     )
-    list_filter = ('document_type', 'is_verified', 'uploaded_at')
+    list_filter = ('document_type', 'uploaded_at')
     search_fields = ('missing_person__name', 'description')
     readonly_fields = ('uploaded_by', 'uploaded_at')

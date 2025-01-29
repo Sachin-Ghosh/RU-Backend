@@ -27,6 +27,14 @@ class MissingPerson(models.Model):
         ('AB-', 'AB Negative'),
     ]
 
+    REPORTER_TYPE_CHOICES = [
+        ('SELF', 'Self Reported'),
+        ('FAMILY', 'Family Member'),
+        ('POLICE', 'Police Officer'),
+        ('NGO', 'NGO Worker'),
+        ('OTHER', 'Other')
+    ]
+
     # Basic Information
     name = models.CharField(max_length=100)
     age_when_missing = models.IntegerField()
@@ -105,6 +113,35 @@ class MissingPerson(models.Model):
         blank=True
     )
     
+    # Additional fields for enhanced reporting
+    is_registered_user = models.BooleanField(default=False)
+    registered_user = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='missing_profile'
+    )
+    reporter_type = models.CharField(
+        max_length=20,
+        choices=REPORTER_TYPE_CHOICES,
+        default='OTHER'
+    )
+    last_known_location = models.JSONField(
+        default=dict,
+        help_text='Store location history with timestamps'
+    )
+    aadhaar_number_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        db_index=True
+    )
+    facial_match_confidence = models.FloatField(
+        default=0.0,
+        help_text='Confidence score from facial recognition'
+    )
+    
     class Meta:
         verbose_name = 'Missing Person'
 
@@ -114,15 +151,32 @@ class MissingPerson(models.Model):
 class MissingPersonDocument(models.Model):
     DOCUMENT_TYPES = [
         ('POLICE_REPORT', 'Police Report'),
+        ('ID_PROOF', 'ID Proof'),
         ('MEDICAL_RECORD', 'Medical Record'),
-        ('ID_PROOF', 'Identity Proof'),
-        ('OTHER', 'Other Document'),
+        ('OTHER', 'Other')
     ]
 
-    missing_person = models.ForeignKey(MissingPerson, on_delete=models.CASCADE, related_name='documents')
-    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
-    document = models.FileField(upload_to='missing_persons/documents/')
+    missing_person = models.ForeignKey(
+        MissingPerson,
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    document_type = models.CharField(
+        max_length=20,
+        choices=DOCUMENT_TYPES
+    )
+    document = models.FileField(
+        upload_to='missing_persons/documents/',
+        null=True,
+        blank=True
+    )
     description = models.TextField(blank=True)
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    is_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.document_type} - {self.missing_person.name}"
