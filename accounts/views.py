@@ -8,9 +8,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
-from .models import User, AadhaarProfile
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
 from .serializers import (
-    UserSerializer, UserDetailSerializer, AadhaarProfileSerializer
+    UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
+    FamilyGroupSerializer, FamilyMemberSerializer
 )
 from .services import RegistrationService
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -168,3 +169,72 @@ class AadhaarProfileViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class FamilyViewSet(viewsets.ModelViewSet):
+    serializer_class = FamilyGroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return FamilyGroup.objects.filter(members=self.request.user)
+
+    def perform_create(self, serializer):
+        family = serializer.save(
+            created_by=self.request.user,
+            passkey=FamilyGroup.generate_passkey()
+        )
+        # Add creator as admin
+        FamilyMember.objects.create(
+            user=self.request.user,
+            family=family,
+            role='ADMIN',
+            relationship='Creator'
+        )
+
+    @action(detail=False, methods=['post'])
+    def join(self, request):
+        """Join a family using passkey"""
+        passkey = request.data.get('passkey')
+        relationship = request.data.get('relationship')
+
+        if not passkey or not relationship:
+            return Response(
+                {'error': 'Passkey and relationship are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            family = FamilyGroup.objects.get(passkey=passkey)
+            
+            # Check if user is already a member
+            if FamilyMember.objects.filter(user=request.user, family=family).exists():
+                return Response(
+                    {'error': 'Already a member of this family'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Add user as member
+            member = FamilyMember.objects.create(
+                user=request.user,
+                family=family,
+                role='MEMBER',
+                relationship=relationship
+            )
+
+            return Response(
+                FamilyMemberSerializer(member).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except FamilyGroup.DoesNotExist:
+            return Response(
+                {'error': 'Invalid passkey'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=['get'])
+    def members(self, request, pk=None):
+        """Get all members of a family"""
+        family = self.get_object()
+        members = FamilyMember.objects.filter(family=family)
+        serializer = FamilyMemberSerializer(members, many=True)
+        return Response(serializer.data)

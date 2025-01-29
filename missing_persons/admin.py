@@ -76,10 +76,15 @@ class MissingPersonAdmin(admin.ModelAdmin):
                 'secondary_contact_phone'
             )
         }),
+        ('Family Information', {
+            'fields': ('family_group', 'family_member'),
+            'classes': ('collapse',)
+        }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at', 'last_modified_by'),
             'classes': ('collapse',)
         }),
+
     )
 
     def save_model(self, request, obj, form, change):

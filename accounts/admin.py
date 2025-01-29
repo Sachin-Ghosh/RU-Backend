@@ -5,7 +5,7 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, AadhaarProfile
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -71,3 +71,18 @@ class AadhaarProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+    
+class FamilyGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'passkey', 'created_at', 'created_by')
+    search_fields = ('name', 'passkey', 'created_by__username')
+    list_filter = ('created_at', 'created_by')
+
+admin.site.register(FamilyGroup, FamilyGroupAdmin)
+
+class FamilyMemberAdmin(admin.ModelAdmin):
+    list_display = ('user', 'family', 'role', 'relationship', 'joined_at')
+    search_fields = ('user__username', 'family__name')
+    list_filter = ('joined_at', 'role')
+
+admin.site.register(FamilyMember, FamilyMemberAdmin)
+

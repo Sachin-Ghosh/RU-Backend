@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 
 # Create your views here.
 
@@ -21,6 +22,17 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['status', 'gender', 'city', 'state']
     search_fields = ['name', 'case_number', 'description']
+
+    def get_queryset(self):
+        queryset = MissingPerson.objects.all()
+        if not self.request.user.is_staff:
+            # Show missing persons reported by user or their family members
+            family_groups = self.request.user.families.all()
+            queryset = queryset.filter(
+                Q(reporter=self.request.user) |
+                Q(family_group__in=family_groups)
+            )
+        return queryset
 
     def perform_create(self, serializer):
         instance = serializer.save(reporter=self.request.user)

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
+import uuid
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -36,6 +37,12 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    families = models.ManyToManyField(
+        'FamilyGroup',
+        through='FamilyMember',
+        related_name='members'
+    )
+
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
@@ -62,3 +69,40 @@ class AadhaarProfile(models.Model):
     class Meta:
         verbose_name = 'Aadhaar Profile'
         verbose_name_plural = 'Aadhaar Profiles'
+
+class FamilyGroup(models.Model):
+    name = models.CharField(max_length=100)
+    passkey = models.CharField(max_length=12, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_families'
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.passkey})"
+
+    @staticmethod
+    def generate_passkey():
+        """Generate a unique 12-character passkey"""
+        return str(uuid.uuid4())[:12].upper()
+
+class FamilyMember(models.Model):
+    ROLE_CHOICES = [
+        ('ADMIN', 'Admin'),
+        ('MEMBER', 'Member'),
+    ]
+
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    family = models.ForeignKey(FamilyGroup, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='MEMBER')
+    relationship = models.CharField(max_length=50)  # e.g., 'Father', 'Mother', 'Son'
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'family')
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.relationship} in {self.family.name}"

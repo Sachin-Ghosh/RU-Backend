@@ -1,4 +1,3 @@
-
 from django.db import models
 # from django.contrib.postgres.fields import ArrayField
 from accounts.models import User
@@ -92,8 +91,23 @@ class MissingPerson(models.Model):
         related_name='modified_cases'
     )
     
+    # Family Information
+    family_group = models.ForeignKey(
+        'accounts.FamilyGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    family_member = models.ForeignKey(
+        'accounts.FamilyMember',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    
     class Meta:
         verbose_name = 'Missing Person'
+
         verbose_name_plural = 'Missing Persons'
         ordering = ['-created_at']
 

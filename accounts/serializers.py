@@ -1,7 +1,7 @@
 # accounts/serializers.py
 
 from rest_framework import serializers
-from .models import User, AadhaarProfile
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -56,3 +56,31 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
         read_only_fields = ('is_verified', 'created_at', 'updated_at')
+
+class FamilyGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FamilyGroup
+        fields = ('id', 'name', 'passkey', 'created_at', 'created_by')
+        read_only_fields = ('passkey', 'created_at', 'created_by')
+
+class FamilyMemberSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    family = FamilyGroupSerializer(read_only=True)
+
+    class Meta:
+        model = FamilyMember
+        fields = ('id', 'user', 'family', 'role', 'relationship', 'joined_at')
+
+class UserFamilySerializer(serializers.ModelSerializer):
+    families = FamilyGroupSerializer(many=True, read_only=True)
+    family_members = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'families', 'family_members')
+
+    def get_family_members(self, obj):
+        family_members = FamilyMember.objects.filter(
+            family__in=obj.families.all()
+        ).exclude(user=obj)
+        return FamilyMemberSerializer(family_members, many=True).data
