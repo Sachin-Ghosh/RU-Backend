@@ -6,23 +6,22 @@ set -o errexit
 python -m venv .venv
 source .venv/bin/activate
 
-echo "Installing system dependencies..."
-apt-get update
-apt-get install -y \
-    python3-pip python3-dev \
-    postgresql postgresql-contrib \
-    libpq-dev gcc \
-    tesseract-ocr \
-    libgl1-mesa-glx
-
 echo "Upgrading pip..."
 python -m pip install --upgrade pip
 
 echo "Installing Python dependencies..."
 pip install --no-cache-dir -r requirements.txt
 
-echo "Installing gunicorn..."
-pip install gunicorn
+# Install specific packages needed for OpenCV and image processing
+pip install --no-cache-dir \
+    opencv-python-headless \
+    numpy \
+    pillow \
+    scikit-learn \
+    gunicorn \
+    psycopg2-binary \
+    whitenoise \
+    dj-database-url
 
 # Create necessary directories
 mkdir -p static staticfiles media
