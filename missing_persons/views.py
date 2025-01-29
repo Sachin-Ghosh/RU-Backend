@@ -481,6 +481,88 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['POST'], url_path='aadhaar-search')
+    def search_by_aadhaar(self, request):
+        """
+        Search for missing persons by Aadhaar number or Aadhaar card photo
+        """
+        aadhaar_number = request.data.get('aadhaar_number')
+        aadhaar_photo = request.FILES.get('aadhaar_photo')
+
+        if not aadhaar_number and not aadhaar_photo:
+            return Response(
+                {'error': 'Please provide either Aadhaar number or Aadhaar card photo'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        matches = []
+
+        # Search by Aadhaar number
+        if aadhaar_number:
+            persons = MissingPerson.objects.filter(
+                aadhaar_number=aadhaar_number
+            )
+            if persons.exists():
+                serializer = self.get_serializer(persons, many=True)
+                return Response(serializer.data)
+
+        # Search by Aadhaar photo
+        if aadhaar_photo:
+            # Save uploaded photo temporarily
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                for chunk in aadhaar_photo.chunks():
+                    temp_file.write(chunk)
+                temp_path = temp_file.name
+
+            try:
+                # Get all Aadhaar card documents
+                aadhaar_docs = MissingPersonDocument.objects.filter(
+                    document_type='ID_PROOF',
+                    description__icontains='Aadhaar'
+                )
+
+                # Compare with each Aadhaar document
+                for doc in aadhaar_docs:
+                    try:
+                        result = DeepFace.verify(
+                            temp_path,
+                            doc.file.path,
+                            model_name='VGG-Face',
+                            distance_metric='cosine'
+                        )
+
+                        if result.get('verified', False):
+                            missing_person = doc.missing_person
+                            match_data = {
+                                'person': missing_person,
+                                'confidence': result.get('distance', 0)
+                            }
+                            matches.append(match_data)
+                    except Exception as e:
+                        print(f"Error processing document {doc.id}: {str(e)}")
+                        continue
+
+            finally:
+                # Clean up temporary file
+                os.unlink(temp_path)
+
+            # Sort matches by confidence
+            matches.sort(key=lambda x: x['confidence'], reverse=True)
+
+            # Return results
+            if matches:
+                persons = [match['person'] for match in matches]
+                serializer = self.get_serializer(persons, many=True)
+                return Response({
+                    'matches': serializer.data,
+                    'match_confidences': [match['confidence'] for match in matches]
+                })
+
+        return Response(
+            {'message': 'No matching records found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
 class MissingPersonDocumentViewSet(viewsets.ModelViewSet):
     queryset = MissingPersonDocument.objects.all()
     serializer_class = MissingPersonDocumentSerializer
