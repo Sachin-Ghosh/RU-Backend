@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 import dj_database_url
 from decouple import config
 from corsheaders.defaults import default_headers
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,6 +39,20 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '127.0.0.1:8000', '*']
 AUTH_USER_MODEL = 'accounts.User'
 
 PORT = int(os.environ.get('PORT', 8000))
+
+# Cloudinary settings
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dkrxtfsnq',
+    'API_KEY': '686846331846496',
+    'API_SECRET': 'WBzIzP6NOrN7s0KQpmE0kus5QrQ'
+}
+
+# Cloudinary configuration
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET']
+)
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
@@ -113,6 +130,8 @@ INSTALLED_APPS = [
     'sightings',
     'authentication',
     'blockchain',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -147,6 +166,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
+# Default file storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -235,6 +256,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# Create directories if they don't exist
+CONVERTED_PDFS_DIR = os.path.join(MEDIA_ROOT, 'converted_pdfs')
+os.makedirs(CONVERTED_PDFS_DIR, exist_ok=True)
 
 SUMMERNOTE_CONFIG = {
     'iframe': True,

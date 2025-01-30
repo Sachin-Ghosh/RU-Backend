@@ -27,6 +27,14 @@ from deepface import DeepFace
 # from django.contrib.gis.db.models.functions import Distance
 import numpy as np
 from accounts.models import FamilyMember, FamilyGroup
+# from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import fitz  # PyMuPDF
+import uuid
+import cloudinary.uploader
+import requests
+from urllib.parse import quote
 
 class MissingPersonViewSet(viewsets.ModelViewSet):
     queryset = MissingPerson.objects.all()
@@ -562,6 +570,146 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
             {'message': 'No matching records found'},
             status=status.HTTP_404_NOT_FOUND
         )
+
+    @action(detail=False, methods=['POST'], url_path='convert-and-post')
+    def convert_pdf_and_post(self, request):
+        """
+        Convert PDF to PNG, upload to Cloudinary, and post to Instagram
+        """
+        if 'pdf_file' not in request.FILES:
+            return Response(
+                {'error': 'Please provide a PDF file'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Instagram API configuration
+        INSTAGRAM_ACCOUNT_ID = "17841468077947131"
+        ACCESS_TOKEN = "EAAX4kmSL4uMBO77bTujUCmsLN4WsZBGwpkehN51bqbYUXb2RDZBBc2iU9hnxy5ptr8Y7QqWpLYXWatRqR4N29Wd321FC0hwV3edugzJb0uvOFmjUtxAbm5bOi9GgHtE8FaHR1mXMiqnrkh9bEhYNwShSlTLNhF9npqb429hdtegc2m1CBb9fJo"
+
+        try:
+            # Step 1: Convert PDF and upload to Cloudinary
+            cloudinary_url = self.convert_to_cloudinary(request.FILES['pdf_file'])
+            if not cloudinary_url:
+                return Response(
+                    {'error': 'Failed to convert and upload PDF'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Step 2: Create Instagram media container
+            creation_id = self.create_instagram_container(
+                cloudinary_url,
+                INSTAGRAM_ACCOUNT_ID,
+                ACCESS_TOKEN,
+                request.data.get('person_name', '')  # Get person's name from request
+            )
+            if not creation_id:
+                return Response(
+                    {'error': 'Failed to create Instagram media container'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Step 3: Publish to Instagram
+            published = self.publish_to_instagram(
+                creation_id,
+                INSTAGRAM_ACCOUNT_ID,
+                ACCESS_TOKEN
+            )
+            if not published:
+                return Response(
+                    {'error': 'Failed to publish to Instagram'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response({
+                'message': 'Successfully converted and posted to Instagram',
+                'cloudinary_url': cloudinary_url,
+                'instagram_post_id': published.get('id')
+            })
+
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {'error': f'Process failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def convert_to_cloudinary(self, pdf_file):
+        """Convert PDF to PNG and upload to Cloudinary"""
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # Save PDF temporarily
+                temp_pdf_path = os.path.join(temp_dir, 'temp.pdf')
+                with open(temp_pdf_path, 'wb') as f:
+                    for chunk in pdf_file.chunks():
+                        f.write(chunk)
+
+                # Convert first page to PNG
+                pdf_document = fitz.open(temp_pdf_path)
+                page = pdf_document[0]
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                
+                # Save PNG temporarily
+                temp_png_path = os.path.join(temp_dir, 'temp.png')
+                pix.save(temp_png_path)
+                
+                # Upload to Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    temp_png_path,
+                    folder='pdf_conversions',
+                    public_id=f'pdf_convert_{uuid.uuid4().hex}_1'
+                )
+                
+                pdf_document.close()
+                return upload_result['secure_url']
+
+        except Exception as e:
+            print(f"Conversion error: {str(e)}")
+            return None
+
+    def create_instagram_container(self, image_url, account_id, access_token, person_name):
+        """Create Instagram media container"""
+        try:
+            caption = (
+                f"Please help us find the above person. If you have any information, "
+                f"please contact on the given info or local authorities immediately.\n"
+                f"📢 Share & spread the word! Every share helps bring them home. "
+                f"🙏💙 #MissingPerson #HelpFind{person_name} #SpreadTheWord"
+            )
+
+            url = (
+                f"https://graph.facebook.com/v20.0/{account_id}/media"
+                f"?image_url={quote(image_url)}"
+                f"&caption={quote(caption)}"
+                f"&access_token={access_token}"
+                f"&media_type=IMAGE"
+            )
+
+            response = requests.post(url)
+            response.raise_for_status()
+            data = response.json()
+            return data.get('id')
+
+        except Exception as e:
+            print(f"Container creation error: {str(e)}")
+            return None
+
+    def publish_to_instagram(self, creation_id, account_id, access_token):
+        """Publish to Instagram"""
+        try:
+            url = (
+                f"https://graph.facebook.com/v20.0/{account_id}/media_publish"
+                f"?creation_id={creation_id}"
+                f"&access_token={access_token}"
+            )
+
+            response = requests.post(url)
+            response.raise_for_status()
+            return response.json()
+
+        except Exception as e:
+            print(f"Publishing error: {str(e)}")
+            return None
 
 class MissingPersonDocumentViewSet(viewsets.ModelViewSet):
     queryset = MissingPersonDocument.objects.all()
