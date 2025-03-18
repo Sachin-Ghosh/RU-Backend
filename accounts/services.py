@@ -7,6 +7,64 @@ from blockchain.services import BlockchainService
 import hashlib
 from datetime import datetime
 from django.utils import timezone
+import random
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.models import User
+
+
+class OTPService:
+    def __init__(self):
+        self.otp_storage = {}  # Temporary in-memory storage; use Redis in production
+
+    def generate_otp(self):
+        return ''.join(random.choices('0123456789', k=6))
+
+    def send_otp(self, phone_or_email):
+        otp = self.generate_otp()
+        self.otp_storage[phone_or_email] = otp
+        
+        if '@' in phone_or_email:
+            try:
+                subject = 'Email Verification - Your OTP'
+                message = f'''
+                Thank you for registering with our platform.
+                Your OTP for email verification is: {otp}
+                
+                This OTP is valid for 10 minutes.
+                
+                If you didn't request this, please ignore this email.
+                '''
+                
+                send_mail(
+                    subject,
+                    message,
+                    settings.EMAIL_HOST_USER,
+                    [phone_or_email],
+                    fail_silently=False,
+                )
+                return True
+            except Exception as e:
+                print(f"Error sending email: {str(e)}")
+                return False
+        else:
+            # Existing phone OTP logic
+            return False
+
+    def verify_otp(self, phone_or_email, otp):
+        stored_otp = self.otp_storage.get(phone_or_email)
+        if stored_otp and stored_otp == otp:
+            del self.otp_storage[phone_or_email]
+            # If email verification, update user's is_verified status
+            if '@' in phone_or_email:
+                try:
+                    user = User.objects.get(email=phone_or_email)
+                    user.is_verified = True
+                    user.save()
+                except User.DoesNotExist:
+                    pass
+            return {'email': phone_or_email} if '@' in phone_or_email else {'phone_number': phone_or_email}
+        return None
 
 class RegistrationService:
     @staticmethod

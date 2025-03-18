@@ -13,7 +13,7 @@ from .serializers import (
     UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
     FamilyGroupSerializer, FamilyMemberSerializer
 )
-from .services import RegistrationService
+from .services import RegistrationService, OTPService
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -24,7 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action == 'register_with_aadhaar' or self.action == 'create':
+        if self.action in ['register_with_aadhaar', 'create', 'send_otp', 'verify_otp']:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
@@ -53,6 +53,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 'longitude': request.data.get('longitude'),
                 'dob': request.data.get('dob'),
                 'gender': request.data.get('gender'),
+                'is_approved': True  # Auto-approve regular citizens
             }
             
 
@@ -150,17 +151,123 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def send_otp(self, request):
+        phone_or_email = request.data.get('phone_or_email')
+        if not phone_or_email:
+            return Response({'error': 'Phone or email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp_service = OTPService()
+        success = otp_service.send_otp(phone_or_email)
+        if success:
+            return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def verify_otp(self, request):
+        phone_or_email = request.data.get('phone_or_email')
+        otp = request.data.get('otp')
+        if not (phone_or_email and otp):
+            return Response({'error': 'Phone/email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp_service = OTPService()
+        user_data = otp_service.verify_otp(phone_or_email, otp)
+        if user_data:
+            user = User.objects.get(email=user_data['email']) if '@' in phone_or_email else User.objects.get(phone_number=phone_or_email)
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'message': 'OTP verified successfully',
+                'tokens': {'access': str(refresh.access_token), 'refresh': str(refresh)},
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+        return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return UserDetailSerializer
         return UserSerializer
+    
+    @action(detail=False, methods=['patch'])
+    def update_settings(self, request):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def verify_aadhaar(self, request, pk=None):
         user = self.get_object()
         # Implement Aadhaar verification logic here
         return Response({'status': 'verification initiated'})
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def register_organization(self, request):
+        """Register NGO or Law Enforcement organization"""
+        try:
+            # Basic validation
+            required_fields = ['organization_name', 'email', 'password', 'phone_number', 'role']
+            for field in required_fields:
+                if not request.data.get(field):
+                    return Response(
+                        {'error': f'{field} is required'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            role = request.data.get('role')
+            if role not in ['NGO', 'LAW_ENFORCEMENT']:
+                return Response(
+                    {'error': 'Invalid role. Must be NGO or LAW_ENFORCEMENT'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create user data
+            user_data = {
+                'username': request.data.get('email'),  # Use email as username
+                'email': request.data.get('email'),
+                'password': request.data.get('password'),
+                'phone_number': request.data.get('phone_number'),
+                'role': role,
+                'organization': request.data.get('organization_name'),
+                'is_approved': False,  # Requires admin approval
+                'is_verified': False,  # Requires email verification
+            }
+
+            # Handle verification documents
+            verification_docs = request.FILES.getlist('verification_documents')
+            if not verification_docs:
+                return Response(
+                    {'error': 'Verification documents are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user_serializer = UserSerializer(data=user_data)
+            if not user_serializer.is_valid():
+                return Response(
+                    user_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = user_serializer.save()
+
+            # Send verification email
+            otp_service = OTPService()
+            otp_service.send_otp(user.email)
+
+            return Response({
+                'message': 'Organization registered successfully. Please verify your email and wait for admin approval.',
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            if 'user' in locals():
+                user.delete()
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class AadhaarProfileViewSet(viewsets.ModelViewSet):
     queryset = AadhaarProfile.objects.all()

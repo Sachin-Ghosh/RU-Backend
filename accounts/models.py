@@ -30,12 +30,19 @@ class User(AbstractUser):
     state = models.CharField(max_length=100, blank=True)
     pincode = models.CharField(max_length=6, blank=True)
     is_verified = models.BooleanField(default=False)
-
+    is_approved = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     organization = models.CharField(max_length=200, blank=True)  # For NGO/Law Enforcement
     organization_id = models.CharField(max_length=50, blank=True)  # For verification
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # New fields for UI requirements
+    preferred_language = models.CharField(max_length=10, default='en', help_text="e.g., 'en', 'hi', 'ta'")
+    notification_preferences = models.JSONField(
+        default=dict,
+        help_text="e.g., {'push': True, 'email': False, 'sms': True}"
+    )
 
     families = models.ManyToManyField(
         'FamilyGroup',

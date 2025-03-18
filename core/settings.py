@@ -299,6 +299,14 @@ SUMMERNOTE_CONFIG = {
 # SESSION_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
 # CSRF_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
 
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ghoshsachin2301@gmail.com'  # Replace with your Gmail
+EMAIL_HOST_USER_PASSWORD = 'ggxfdbpjopmrhmic'  # Replace with your Gmail app password
+
 # For development only - be careful with this in production
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True

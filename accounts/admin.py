@@ -11,20 +11,30 @@ from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
 class CustomUserAdmin(UserAdmin):
     list_display = (
         'username', 'email', 'first_name', 'last_name',
-        'role', 'is_verified', 'created_at'
+        'role', 'is_verified', 'created_at', 'is_approved', 'preferred_language'
     )
-    list_filter = ('role', 'is_verified', 'created_at', 'city', 'state')
+    list_filter = ('role', 'is_verified', 'created_at', 'city', 'state', 'is_approved', 'preferred_language')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'phone_number')
     ordering = ('-created_at',)
+    actions = ['approve_users', 'suspend_users']
+    
+    def approve_users(self, request, queryset):
+        queryset.update(is_approved=True)
+        queryset.update(is_verified=True)
+    approve_users.short_description = "Approve selected users"
+
+    def suspend_users(self, request, queryset):
+        queryset.update(is_approved=False)
+        queryset.update(is_verified=False)
+    suspend_users.short_description = "Suspend selected users"
     
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {
             'fields': (
                 'first_name', 'middle_name', 'last_name', 'email', 'phone_number',
-                'profile_picture', 'dob', 'gender'
+                'profile_picture', 'dob', 'gender', 'preferred_language'
             )
-
         }),
         ('Address', {
             'fields': ('address', 'city', 'state', 'pincode', 'latitude', 'longitude')
@@ -33,7 +43,10 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('role', 'organization', 'organization_id')
         }),
         ('Status', {
-            'fields': ('is_verified', 'is_active', 'is_staff', 'is_superuser')
+            'fields': ('is_verified', 'is_approved', 'is_active', 'is_staff', 'is_superuser')
+        }),
+        ('Notification Preferences', {
+            'fields': ('notification_preferences',)
         }),
         ('Important dates', {
             'fields': ('last_login', 'date_joined')

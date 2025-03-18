@@ -11,10 +11,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'username', 'email', 'password', 'first_name', 'middle_name', 'last_name',
             'role', 'phone_number', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'dob', 'gender', 
-            'is_verified', 'profile_picture', 'organization',
-            'organization_id', 'created_at', 'updated_at'
+            'is_verified', 'is_approved', 'profile_picture', 'organization',
+            'organization_id', 'created_at', 'updated_at', 'preferred_language', 'notification_preferences'
         )
-        read_only_fields = ('is_verified', 'created_at', 'updated_at')
+        read_only_fields = ('is_verified', 'is_approved', 'created_at', 'updated_at')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -51,11 +51,16 @@ class AadhaarProfileSerializer(serializers.ModelSerializer):
         
 class UserDetailSerializer(serializers.ModelSerializer):
     aadhaar_profile = AadhaarProfileSerializer(read_only=True)
+    families = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = '__all__'
         read_only_fields = ('is_verified', 'created_at', 'updated_at')
+        
+    def get_families(self, obj):
+        family_members = FamilyMember.objects.filter(user=obj)
+        return FamilyMemberSerializer(family_members, many=True).data
 
 class FamilyGroupSerializer(serializers.ModelSerializer):
     class Meta:
