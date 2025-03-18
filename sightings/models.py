@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 from accounts.models import User
 
 
@@ -18,7 +18,17 @@ class Sighting(models.Model):
     ]
 
     missing_person = models.ForeignKey('missing_persons.MissingPerson', on_delete=models.CASCADE)
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reported_sightings')
+    reporter = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='reported_sightings',
+        null=True,  # Allow anonymous reports
+        blank=True
+    )
+    
+    # Add fields for anonymous reporters
+    reporter_name = models.CharField(max_length=100, blank=True)
+    reporter_contact = models.CharField(max_length=100, blank=True)
     
     # Location Information
     location = models.CharField(max_length=255)
@@ -67,6 +77,9 @@ class Sighting(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     device_info = models.JSONField(default=dict)
+    
+    # New Fields for UI
+    is_notified = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-timestamp']

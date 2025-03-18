@@ -7,12 +7,13 @@ from django.shortcuts import render
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Sighting
 from .serializers import SightingSerializer
 from deepface import DeepFace
 import numpy as np
+from .services import SightingService
 from blockchain.services import BlockchainService
 from django.db.models import Q
 from django.utils import timezone
@@ -20,16 +21,38 @@ from missing_persons.models import MissingPerson
 import tempfile
 import os
 from math import radians, sin, cos, sqrt, asin
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 # import face_recognition
 
 class SightingViewSet(viewsets.ModelViewSet):
     queryset = Sighting.objects.all()
     serializer_class = SightingSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['verification_status', 'confidence_level']
     search_fields = ['missing_person__name', 'location', 'description']
-
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    
+    def get_permissions(self):
+        """
+        Allow anonymous users to create sightings,
+        but require authentication for other actions
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+            queryset = Sighting.objects.all()
+            if not self.request.user.is_staff:
+                family_groups = self.request.user.families.all()
+                queryset = queryset.filter(
+                    Q(reporter=self.request.user) | Q(missing_person__family_group__in=family_groups)
+                )
+            return queryset
+    
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         """
         Calculate the great circle distance between two points 
@@ -48,15 +71,17 @@ class SightingViewSet(viewsets.ModelViewSet):
         return c * r
 
     def perform_create(self, serializer):
-        # Add reporter and IP address
+        # Add reporter if user is authenticated, otherwise save as anonymous
+        reporter = self.request.user if self.request.user.is_authenticated else None
+        
         serializer.save(
-            reporter=self.request.user,
+            reporter=reporter,
             ip_address=self.get_client_ip(self.request)
         )
 
         # Process facial recognition if photo is provided
         sighting = serializer.instance
-        if sighting.photo:
+        if sighting.photo and sighting.missing_person.recent_photo:
             self.process_facial_recognition(sighting)
 
     def get_client_ip(self, request):
@@ -146,29 +171,51 @@ class SightingViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['POST'])
+    @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):
-        """Verify a sighting"""
         sighting = self.get_object()
         status = request.data.get('verification_status')
-        notes = request.data.get('verification_notes')
-        
-        if status not in ['VERIFIED', 'REJECTED', 'PENDING']:
-            return Response(
-                {'error': 'Invalid status'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        notes = request.data.get('verification_notes', '')
+
+        if status not in dict(Sighting.VERIFICATION_STATUS):
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+
         sighting.verification_status = status
         sighting.verification_notes = notes
         sighting.verified_by = request.user
         sighting.save()
-        
-        # Update missing person status if verified
-        if status == 'VERIFIED':
-            missing_person = sighting.missing_person
-            missing_person.status = 'FOUND'
-            missing_person.save()
-        
+
+        sighting_service = SightingService()
+        sighting_service.update_missing_person_status(sighting)
+        sighting_service.notify_relevant_parties(sighting)
+
         serializer = self.get_serializer(sighting)
         return Response(serializer.data)
+
+    def haversine_distance(self, lat1, lon1, lat2, lon2):
+        lat1, lon1, lat2, lon2 = map(radians, [float(lat1), float(lon1), float(lat2), float(lon2)])
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        r = 6371  # Radius of earth in kilometers
+        return c * r    
+    
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        missing_person_id = request.query_params.get('missing_person_id')
+        days = int(request.query_params.get('days', 30))
+
+        queryset = Sighting.objects.filter(timestamp__gte=timezone.now() - timezone.timedelta(days=days))
+        if missing_person_id:
+            queryset = queryset.filter(missing_person_id=missing_person_id)
+
+        data = {
+            'total_sightings': queryset.count(),
+            'by_status': queryset.values('verification_status').annotate(count=models.Count('id')),
+            'heatmap_data': [
+                {'lat': float(s.latitude), 'lng': float(s.longitude), 'count': 1}
+                for s in queryset.filter(latitude__isnull=False, longitude__isnull=False)
+            ]
+        }
+        return Response(data)

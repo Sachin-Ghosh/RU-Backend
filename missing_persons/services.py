@@ -15,6 +15,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import io
 from PIL import Image, ImageDraw, ImageFont
+from django.db import models
 
 class PosterService:
     def generate_poster(self, missing_person):

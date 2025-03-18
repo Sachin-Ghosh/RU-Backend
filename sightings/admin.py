@@ -8,10 +8,7 @@ from .models import Sighting
 
 @admin.register(Sighting)
 class SightingAdmin(admin.ModelAdmin):
-    list_display = (
-        'missing_person', 'location', 'timestamp',
-        'verification_status', 'confidence_level'
-    )
+    list_display = ('id', 'missing_person', 'reporter', 'location', 'timestamp', 'verification_status', 'confidence_level')
     list_filter = (
         'verification_status', 'confidence_level',
         'created_at', 'timestamp'
@@ -24,6 +21,7 @@ class SightingAdmin(admin.ModelAdmin):
         'facial_match_confidence', 'created_at',
         'updated_at', 'reporter', 'ip_address'
     )
+    actions = ['verify_sightings', 'reject_sightings']
 
     fieldsets = (
         ('Basic Information', {
@@ -68,6 +66,17 @@ class SightingAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def verify_sightings(self, request, queryset):
+        queryset.update(verification_status='VERIFIED', verified_by=request.user)
+        for sighting in queryset:
+            sighting.missing_person.status = 'FOUND' if sighting.confidence_level == 'HIGH' else 'INVESTIGATING'
+            sighting.missing_person.save()
+    verify_sightings.short_description = "Verify selected sightings"
+
+    def reject_sightings(self, request, queryset):
+        queryset.update(verification_status='REJECTED', verified_by=request.user)
+    reject_sightings.short_description = "Reject selected sightings"
 
     def save_model(self, request, obj, form, change):
         if not change:  # If creating new object
