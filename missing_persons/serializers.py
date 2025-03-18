@@ -41,19 +41,19 @@ class MissingPersonSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'case_number', 'name', 'age_when_missing', 'date_of_birth',
             'gender', 'blood_group', 'nationality', 'height', 'weight',
-            'complexion', 'identifying_marks', 'physical_attributes',
+            'complexion', 'identifying_marks', 'physical_attributes','recent_photo', 'additional_photos',
             'last_seen_location', 'last_seen_date', 'last_seen_details',
-            'last_seen_wearing', 'possible_locations', 'fir_number',
+            'last_seen_wearing', 'possible_locations', 'fir_number', 'poster_image',
             'status', 'priority_level', 'medical_conditions', 'medications',
             'emergency_contact_name', 'emergency_contact_phone',
             'emergency_contact_relation', 'secondary_contact_name',
-            'secondary_contact_phone', 'documents', 'recent_photo',
+            'secondary_contact_phone', 'reporter', 'assigned_officer', 'assigned_ngo', 'documents', 'recent_photo',
             'last_known_latitude', 'last_known_longitude',
             'aadhaar_number', 'aadhaar_photo', 'family_group', 
-            'distance', 'family_members',
+            'distance', 'family_members','aadhaar_number_hash','reporter_type'
             'created_at', 'updated_at'
         ]
-        read_only_fields = ('case_number', 'reporter', 'documents')
+        read_only_fields = ('case_number', 'reporter', 'created_at', 'updated_at', 'documents')
 
     def to_internal_value(self, data):
         # Keep medical conditions and medications as they are

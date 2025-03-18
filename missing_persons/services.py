@@ -14,7 +14,50 @@ import tempfile
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import io
+from PIL import Image, ImageDraw, ImageFont
 
+class PosterService:
+    def generate_poster(self, missing_person):
+        # Create a simple poster (customize as needed)
+        img = Image.new('RGB', (400, 600), color='white')
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.load_default()
+
+        # Add text
+        draw.text((10, 10), "MISSING PERSON", font=font, fill='red')
+        draw.text((10, 50), f"Name: {missing_person.name}", font=font, fill='black')
+        draw.text((10, 70), f"Age: {missing_person.age_when_missing}", font=font, fill='black')
+        draw.text((10, 90), f"Last Seen: {missing_person.last_seen_location}", font=font, fill='black')
+        draw.text((10, 110), f"Contact: {missing_person.emergency_contact_phone}", font=font, fill='black')
+
+        # Add photo if available
+        if missing_person.recent_photo:
+            photo = Image.open(missing_person.recent_photo.path).resize((200, 200))
+            img.paste(photo, (100, 150))
+
+        # Save to buffer
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        return ContentFile(buffer.getvalue(), name=f'{missing_person.case_number}_poster.png')
+
+class AnalyticsService:
+    def get_total_cases(self):
+        return MissingPerson.objects.count()
+
+    def get_cases_by_region(self):
+        return MissingPerson.objects.values('last_seen_location').annotate(count=models.Count('id'))
+
+    def get_resolution_rate(self):
+        total = MissingPerson.objects.count()
+        resolved = MissingPerson.objects.filter(status__in=['FOUND', 'CLOSED']).count()
+        return (resolved / total * 100) if total > 0 else 0
+
+    def get_heatmap_data(self):
+        return [
+            {'lat': float(p.last_known_latitude), 'lng': float(p.last_known_longitude), 'count': 1}
+            for p in MissingPerson.objects.filter(last_known_latitude__isnull=False, last_known_longitude__isnull=False)
+        ]
+        
 class BiometricService:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')

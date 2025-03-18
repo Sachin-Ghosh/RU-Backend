@@ -6,6 +6,7 @@ from django.db import models
 from accounts.models import User
 import os
 from django.conf import settings
+import uuid
 
 def document_upload_path(instance, filename):
     # Generate path for document uploads
@@ -67,6 +68,7 @@ class MissingPerson(models.Model):
     recent_photo = models.ImageField(upload_to=photo_upload_path, null=True, blank=True)
     additional_photos = models.JSONField(default=list)  # Store multiple photo URLs
     facial_encoding = models.JSONField(null=True)  # Store facial recognition data
+    poster_image = models.ImageField(upload_to='posters/', null=True, blank=True)  # Generated poster
     
     # Missing Details
     last_seen_location = models.CharField(max_length=255)
@@ -74,6 +76,8 @@ class MissingPerson(models.Model):
     last_seen_details = models.TextField()
     last_seen_wearing = models.TextField()
     possible_locations = models.JSONField(default=list)
+    last_known_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    last_known_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
     # Case Details
     case_number = models.CharField(max_length=50, unique=True)
@@ -94,6 +98,9 @@ class MissingPerson(models.Model):
         null=True, 
         blank=True,
         related_name='assigned_cases'
+    )
+    assigned_ngo = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='ngo_cases'
     )
     
     # Medical Information
@@ -161,13 +168,6 @@ class MissingPerson(models.Model):
         help_text='Confidence score from facial recognition'
     )
     
-    # New fields for location
-    last_known_latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
-    )
-    last_known_longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
-    )
     aadhaar_number = models.CharField(max_length=12, blank=True, null=True)
     aadhaar_photo = models.ImageField(
         upload_to='aadhaar_photos', blank=True, null=True

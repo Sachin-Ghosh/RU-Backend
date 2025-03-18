@@ -15,20 +15,21 @@ class MissingPersonDocumentInline(admin.TabularInline):
 class MissingPersonAdmin(admin.ModelAdmin):
     list_display = (
         'case_number', 'name', 'age_when_missing',
-        'last_seen_date', 'status', 'priority_level'
+        'last_seen_date', 'status', 'priority_level','reporter', 'assigned_officer', 'assigned_ngo'
     )
     list_filter = (
         'status', 'gender', 'priority_level',
-        'created_at', 'last_seen_date'
+        'created_at', 'last_seen_date','reporter', 'assigned_officer', 'assigned_ngo'
     )
     search_fields = (
         'name', 'case_number', 'fir_number',
-        'last_seen_location', 'description'
+        'last_seen_location', 'description','reporter', 'assigned_officer', 'assigned_ngo'
     )
     readonly_fields = (
         'case_number', 'facial_encoding',
-        'created_at', 'updated_at', 'reporter'
+        'created_at', 'updated_at', 'reporter', 'assigned_officer', 'assigned_ngo'
     )
+    actions = ['assign_to_officer', 'assign_to_ngo', 'close_cases']
     inlines = [MissingPersonDocumentInline]
 
     fieldsets = (
@@ -62,7 +63,7 @@ class MissingPersonAdmin(admin.ModelAdmin):
         ('Case Information', {
             'fields': (
                 'fir_number', 'status', 'priority_level',
-                'reporter', 'assigned_officer'
+                'reporter', 'assigned_officer', 'assigned_ngo'
             )
         }),
         ('Medical Information', {
@@ -87,6 +88,22 @@ class MissingPersonAdmin(admin.ModelAdmin):
 
     )
 
+    def assign_to_officer(self, request, queryset):
+        officer = request.user if request.user.role == 'LAW_ENFORCEMENT' else None
+        if officer:
+            queryset.update(assigned_officer=officer)
+    assign_to_officer.short_description = "Assign to current officer"
+
+    def assign_to_ngo(self, request, queryset):
+        ngo = request.user if request.user.role == 'NGO' else None
+        if ngo:
+            queryset.update(assigned_ngo=ngo)
+    assign_to_ngo.short_description = "Assign to current NGO"
+
+    def close_cases(self, request, queryset):
+        queryset.update(status='CLOSED')
+    close_cases.short_description = "Close selected cases"
+    
     def save_model(self, request, obj, form, change):
         if not change:  # If creating new object
             obj.reporter = request.user
@@ -102,3 +119,4 @@ class MissingPersonDocumentAdmin(admin.ModelAdmin):
     list_filter = ('document_type', 'uploaded_at')
     search_fields = ('missing_person__name', 'description')
     readonly_fields = ('uploaded_by', 'uploaded_at')
+

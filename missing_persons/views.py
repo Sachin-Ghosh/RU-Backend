@@ -18,7 +18,7 @@ from .models import MissingPerson, MissingPersonDocument
 from .serializers import MissingPersonSerializer, MissingPersonDocumentSerializer
 from blockchain.services import BlockchainService
 from blockchain.models import Block
-from .services import BiometricService, MissingPersonService
+from .services import BiometricService, MissingPersonService,PosterService,AnalyticsService
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.core.files.base import ContentFile
 import base64
@@ -27,6 +27,7 @@ from deepface import DeepFace
 # from django.contrib.gis.db.models.functions import Distance
 import numpy as np
 from accounts.models import FamilyMember, FamilyGroup
+from accounts.models import User
 # from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -76,7 +77,9 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
             # Generate case number
             case_number = f"MP{''.join(random.choices('0123456789ABCDEF', k=8))}"
             data['case_number'] = case_number
-
+            
+            # data['reporter'] = request.user.id
+            
             # Handle JSON fields
             for field in ['physical_attributes', 'possible_locations']:
                 if field in data and isinstance(data[field], str):
@@ -152,6 +155,64 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            
+    @action(detail=True, methods=['post'])
+    def generate_poster(self, request, pk=None):
+        missing_person = self.get_object()
+        poster_service = PosterService()
+        poster_file = poster_service.generate_poster(missing_person)
+        
+        missing_person.poster_image.save(f'{missing_person.case_number}_poster.png', poster_file)
+        missing_person.save()
+        
+        serializer = self.get_serializer(missing_person)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def share_poster(self, request, pk=None):
+        missing_person = self.get_object()
+        platform = request.data.get('platform')
+        
+        if not missing_person.poster_image:
+            return Response({'error': 'Poster not generated yet'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        poster_url = missing_person.poster_image.url
+        if platform == 'instagram':
+            # Simplified Instagram posting (assuming credentials are configured)
+            upload_result = cloudinary.uploader.upload(missing_person.poster_image.path)
+            return Response({'url': upload_result['secure_url'], 'message': 'Posted to Instagram'})
+        elif platform == 'whatsapp':
+            return Response({'url': poster_url, 'message': 'Poster URL ready for WhatsApp'})
+        return Response({'error': 'Unsupported platform'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        analytics_service = AnalyticsService()
+        data = {
+            'total_cases': analytics_service.get_total_cases(),
+            'cases_by_region': analytics_service.get_cases_by_region(),
+            'resolution_rate': analytics_service.get_resolution_rate(),
+            'heatmap_data': analytics_service.get_heatmap_data()
+        }
+        return Response(data)
+
+    @action(detail=True, methods=['post'])
+    def assign_collaborator(self, request, pk=None):
+        missing_person = self.get_object()
+        collaborator_id = request.data.get('collaborator_id')
+        collaborator_type = request.data.get('type')  # 'officer' or 'ngo'
+        
+        collaborator = User.objects.get(id=collaborator_id)
+        if collaborator_type == 'officer':
+            missing_person.assigned_officer = collaborator
+        elif collaborator_type == 'ngo':
+            missing_person.assigned_ngo = collaborator
+        else:
+            return Response({'error': 'Invalid collaborator type'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        missing_person.save()
+        return Response(self.get_serializer(missing_person).data)
 
     @action(detail=False, methods=['GET'])
     def search(self, request):
@@ -574,7 +635,7 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['POST'], url_path='convert-and-post')
     def convert_pdf_and_post(self, request):
         """
-        Convert PDF to PNG, upload to Cloudinary, and post to Instagram
+        Convert PDF to PNG, save both files, upload to Cloudinary, and post to Instagram
         """
         if 'pdf_file' not in request.FILES:
             return Response(
@@ -587,6 +648,15 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
         ACCESS_TOKEN = "EAAX4kmSL4uMBO77bTujUCmsLN4WsZBGwpkehN51bqbYUXb2RDZBBc2iU9hnxy5ptr8Y7QqWpLYXWatRqR4N29Wd321FC0hwV3edugzJb0uvOFmjUtxAbm5bOi9GgHtE8FaHR1mXMiqnrkh9bEhYNwShSlTLNhF9npqb429hdtegc2m1CBb9fJo"
 
         try:
+            # pdf_file = request.FILES['pdf_file']
+            # case_number = request.data.get('case_number')
+            # person_name = request.data.get('person_name', '')
+
+            # # Save PDF file
+            # pdf_path = f'posters/{case_number}_poster.pdf'
+            # with default_storage.open(pdf_path, 'wb+') as destination:
+            #     for chunk in pdf_file.chunks():
+            #         destination.write(chunk)
             # Step 1: Convert PDF and upload to Cloudinary
             cloudinary_url = self.convert_to_cloudinary(request.FILES['pdf_file'])
             if not cloudinary_url:
