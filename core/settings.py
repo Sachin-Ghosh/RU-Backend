@@ -78,9 +78,12 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 
 # Application definition
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 # JWT settings
@@ -304,8 +307,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'ghoshsachin2301@gmail.com'  # Replace with your Gmail
-EMAIL_HOST_USER_PASSWORD = 'ggxfdbpjopmrhmic'  # Replace with your Gmail app password
+EMAIL_HOST_USER = 'ghoshsachin2301@gmail.com'
+EMAIL_HOST_PASSWORD = 'ggxfdbpjopmrhmic'  # Note: Changed from EMAIL_HOST_USER_PASSWORD
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # For development only - be careful with this in production
 CORS_ALLOW_ALL_ORIGINS = True
@@ -316,4 +320,37 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
+
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
+# OTP validity duration in seconds (10 minutes)
+OTP_VALIDITY_DURATION = 600
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'accounts': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
 

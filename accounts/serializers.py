@@ -1,7 +1,7 @@
 # accounts/serializers.py
 
 from rest_framework import serializers
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -10,9 +10,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'password', 'first_name', 'middle_name', 'last_name',
-            'role', 'phone_number', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 'dob', 'gender', 
-            'is_verified', 'is_approved', 'profile_picture', 'organization',
-            'organization_id', 'created_at', 'updated_at', 'preferred_language', 'notification_preferences'
+            'role', 'phone_number', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 
+            'dob', 'gender', 'is_verified', 'is_approved', 'profile_picture', 'organization',
+            'organization_id', 'created_at', 'updated_at', 'preferred_language', 'notification_preferences',
+            'organization_latitude', 'organization_longitude', 'organization_location'
         )
         read_only_fields = ('is_verified', 'is_approved', 'created_at', 'updated_at')
         extra_kwargs = {
@@ -89,3 +90,23 @@ class UserFamilySerializer(serializers.ModelSerializer):
             family__in=obj.families.all()
         ).exclude(user=obj)
         return FamilyMemberSerializer(family_members, many=True).data
+
+
+class CollaborationMessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = CollaborationMessage
+        fields = ('id', 'sender', 'message', 'file_attachment', 'sent_at')
+
+class CollaborationSerializer(serializers.ModelSerializer):
+    initiator = UserSerializer(read_only=True)
+    collaborator = UserSerializer(read_only=True)
+    messages = CollaborationMessageSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Collaboration
+        fields = (
+            'id', 'initiator', 'collaborator', 'missing_person',
+            'status', 'created_at', 'updated_at', 'notes', 'messages'
+        )

@@ -11,21 +11,32 @@ import random
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
+import logging
+from datetime import timedelta
+from authentication.models import OTPVerification
 
+logger = logging.getLogger(__name__)
 
 class OTPService:
-    def __init__(self):
-        self.otp_storage = {}  # Temporary in-memory storage; use Redis in production
-
-    def generate_otp(self):
+    @staticmethod
+    def generate_otp():
         return ''.join(random.choices('0123456789', k=6))
 
     def send_otp(self, phone_or_email):
-        otp = self.generate_otp()
-        self.otp_storage[phone_or_email] = otp
-        
-        if '@' in phone_or_email:
+        try:
+            otp = self.generate_otp()
+            logger.info(f"Generating OTP for {phone_or_email}: {otp}")
+            
+            # Get user instance
+            from accounts.models import User
             try:
+                user = User.objects.get(email=phone_or_email)
+            except User.DoesNotExist:
+                logger.error(f"User not found for {phone_or_email}")
+                return False
+
+            if '@' in phone_or_email:  # Email OTP
                 subject = 'Email Verification - Your OTP'
                 message = f'''
                 Thank you for registering with our platform.
@@ -36,35 +47,72 @@ class OTPService:
                 If you didn't request this, please ignore this email.
                 '''
                 
-                send_mail(
+                # Send email
+                email_sent = send_mail(
                     subject,
                     message,
-                    settings.EMAIL_HOST_USER,
+                    settings.DEFAULT_FROM_EMAIL,
                     [phone_or_email],
                     fail_silently=False,
                 )
-                return True
-            except Exception as e:
-                print(f"Error sending email: {str(e)}")
-                return False
-        else:
-            # Existing phone OTP logic
+                
+                if email_sent:
+                    # Create OTP verification record
+                    expires_at = timezone.now() + timedelta(minutes=10)
+                    OTPVerification.objects.create(
+                        user=user,
+                        otp=otp,
+                        purpose='EMAIL_VERIFICATION',
+                        expires_at=expires_at
+                    )
+                    logger.info(f"OTP stored in database for {phone_or_email}")
+                    return True
+                    
+            return False
+
+        except Exception as e:
+            logger.error(f"Error in send_otp: {str(e)}")
             return False
 
     def verify_otp(self, phone_or_email, otp):
-        stored_otp = self.otp_storage.get(phone_or_email)
-        if stored_otp and stored_otp == otp:
-            del self.otp_storage[phone_or_email]
-            # If email verification, update user's is_verified status
-            if '@' in phone_or_email:
-                try:
-                    user = User.objects.get(email=phone_or_email)
+        try:
+            logger.info(f"Verifying OTP for {phone_or_email}. Provided: {otp}")
+            
+            # Get user and check OTP
+            from accounts.models import User
+            try:
+                user = User.objects.get(email=phone_or_email)
+                otp_record = OTPVerification.objects.filter(
+                    user=user,
+                    otp=otp,
+                    is_used=False,
+                    expires_at__gt=timezone.now(),
+                    purpose='EMAIL_VERIFICATION'
+                ).first()
+
+                if otp_record:
+                    # Mark OTP as used
+                    otp_record.is_used = True
+                    otp_record.verified_at = timezone.now()
+                    otp_record.save()
+
+                    # Update user verification status
                     user.is_verified = True
                     user.save()
-                except User.DoesNotExist:
-                    pass
-            return {'email': phone_or_email} if '@' in phone_or_email else {'phone_number': phone_or_email}
-        return None
+                    
+                    logger.info(f"OTP verified successfully for {phone_or_email}")
+                    return True
+                
+                logger.warning(f"Invalid or expired OTP for {phone_or_email}")
+                return False
+
+            except User.DoesNotExist:
+                logger.error(f"User not found for {phone_or_email}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error in verify_otp: {str(e)}")
+            return False
 
 class RegistrationService:
     @staticmethod

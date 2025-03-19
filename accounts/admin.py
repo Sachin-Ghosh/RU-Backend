@@ -5,7 +5,7 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -99,3 +99,14 @@ class FamilyMemberAdmin(admin.ModelAdmin):
 
 admin.site.register(FamilyMember, FamilyMemberAdmin)
 
+@admin.register(Collaboration)
+class CollaborationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'initiator', 'collaborator', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('initiator__username', 'collaborator__username')
+
+@admin.register(CollaborationMessage)
+class CollaborationMessageAdmin(admin.ModelAdmin):
+    list_display = ('collaboration', 'sender', 'sent_at')
+    list_filter = ('sent_at',)
+    search_fields = ('message', 'sender__username')

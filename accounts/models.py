@@ -34,6 +34,10 @@ class User(AbstractUser):
     profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     organization = models.CharField(max_length=200, blank=True)  # For NGO/Law Enforcement
     organization_id = models.CharField(max_length=50, blank=True)  # For verification
+    # Add these fields for NGO/Organization
+    organization_latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    organization_longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    organization_location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -113,3 +117,61 @@ class FamilyMember(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.relationship} in {self.family.name}"
+    
+    
+class Collaboration(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('ACTIVE', 'Active'),
+        ('COMPLETED', 'Completed'),
+        ('REJECTED', 'Rejected'),
+    ]
+    
+    initiator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='initiated_collaborations'
+    )
+    collaborator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_collaborations'
+    )
+    missing_person = models.ForeignKey(
+        'missing_persons.MissingPerson',  # Assuming you have a MissingPerson model
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ('initiator', 'collaborator', 'missing_person')
+
+class CollaborationMessage(models.Model):
+    collaboration = models.ForeignKey(
+        Collaboration,
+        on_delete=models.CASCADE,
+        related_name='messages'
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+    message = models.TextField()
+    file_attachment = models.FileField(
+        upload_to='collaboration_files/',
+        null=True,
+        blank=True
+    )
+    sent_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Message in {self.collaboration} by {self.sender}"

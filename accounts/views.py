@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.mail import send_mail
 
 # Create your views here.
 # accounts/views.py
@@ -8,13 +9,22 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model, authenticate
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
 from .serializers import (
     UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
-    FamilyGroupSerializer, FamilyMemberSerializer
+    FamilyGroupSerializer, FamilyMemberSerializer,CollaborationMessageSerializer,CollaborationSerializer
 )
 from .services import RegistrationService, OTPService
 from rest_framework_simplejwt.tokens import RefreshToken
+import logging
+from django.conf import settings
+
+from accounts import serializers
+
+from accounts import models
+
+
+logger = logging.getLogger(__name__)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -24,7 +34,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.action in ['register_with_aadhaar', 'create', 'send_otp', 'verify_otp']:
+        if self.action in ['register_with_aadhaar', 'create', 'send_otp', 'verify_otp', 'register_organization']:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
@@ -108,13 +118,24 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
             
             try:
+                # Send verification email
+                otp_service = OTPService()
+                if not otp_service.send_otp(user.email):
+                    user.delete()
+                    return Response(
+                        {'error': 'Failed to send verification email'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+                # Process biometric registration
                 aadhaar_profile = RegistrationService.process_registration(
                     user,
                     aadhaar_image,
                     profile_picture,
                     fingerprint
                 )
-                
+                user.is_approved = True
+                user.save()
                 # Generate tokens
                 refresh = RefreshToken.for_user(user)
                 tokens = {
@@ -126,7 +147,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     'user': UserSerializer(user).data,
                     'tokens': tokens,
                     'aadhaar_profile': AadhaarProfileSerializer(aadhaar_profile).data,
-                    'message': 'User registered successfully with biometric data'
+                    'message': 'User registered successfully. Please verify your email with the OTP sent.'
                 }
                 
             except Exception as e:
@@ -164,24 +185,43 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
         return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['POST'], permission_classes=[AllowAny])
     def verify_otp(self, request):
-        phone_or_email = request.data.get('phone_or_email')
-        otp = request.data.get('otp')
-        if not (phone_or_email and otp):
-            return Response({'error': 'Phone/email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        otp_service = OTPService()
-        user_data = otp_service.verify_otp(phone_or_email, otp)
-        if user_data:
-            user = User.objects.get(email=user_data['email']) if '@' in phone_or_email else User.objects.get(phone_number=phone_or_email)
-            refresh = RefreshToken.for_user(user)
+        """Verify OTP for email/phone verification"""
+        try:
+            # Get email/phone and OTP from request data
+            email_or_phone = request.data.get('email_or_phone') or request.data.get('email')  # Accept both field names
+            otp = request.data.get('otp')
+            
+            logger.info(f"Verifying OTP request for {email_or_phone}")
+
+            if not email_or_phone or not otp:
+                return Response({
+                    'error': 'Email/Phone and OTP are required',
+                    'received_data': {
+                        'email_or_phone': email_or_phone,
+                        'otp': otp
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            otp_service = OTPService()
+            result = otp_service.verify_otp(email_or_phone, otp)
+            
+            if result:
+                return Response({
+                    'message': 'Email verified successfully',
+                    'is_verified': True
+                }, status=status.HTTP_200_OK)
+            
             return Response({
-                'message': 'OTP verified successfully',
-                'tokens': {'access': str(refresh.access_token), 'refresh': str(refresh)},
-                'user': UserSerializer(user).data
-            }, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'Invalid or expired OTP'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            logger.error(f"Error in verify_otp view: {str(e)}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -208,7 +248,10 @@ class UserViewSet(viewsets.ModelViewSet):
         """Register NGO or Law Enforcement organization"""
         try:
             # Basic validation
-            required_fields = ['organization_name', 'email', 'password', 'phone_number', 'role']
+            required_fields = [
+                'organization_name', 'email', 'password', 'phone_number', 'role',
+                'first_name', 'last_name'  # Added personal details
+            ]
             for field in required_fields:
                 if not request.data.get(field):
                     return Response(
@@ -223,7 +266,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Create user data
+            # Create user data with personal details
             user_data = {
                 'username': request.data.get('email'),  # Use email as username
                 'email': request.data.get('email'),
@@ -231,8 +274,14 @@ class UserViewSet(viewsets.ModelViewSet):
                 'phone_number': request.data.get('phone_number'),
                 'role': role,
                 'organization': request.data.get('organization_name'),
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+                'middle_name': request.data.get('middle_name', ''),  # Optional
                 'is_approved': False,  # Requires admin approval
                 'is_verified': False,  # Requires email verification
+                'organization_latitude': request.data.get('organization_latitude'),
+                'organization_longitude': request.data.get('organization_longitude'),
+                'organization_location': request.data.get('organization_location'),
             }
 
             # Handle verification documents
@@ -254,10 +303,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
             # Send verification email
             otp_service = OTPService()
-            otp_service.send_otp(user.email)
+            if not otp_service.send_otp(user.email):
+                user.delete()
+                return Response(
+                    {'error': 'Failed to send verification email'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             return Response({
-                'message': 'Organization registered successfully. Please verify your email and wait for admin approval.',
+                'message': 'Organization registered successfully. Please verify your email with the OTP sent.',
                 'user': UserSerializer(user).data
             }, status=status.HTTP_201_CREATED)
 
@@ -377,6 +431,18 @@ def login_user(request):
                 {'error': 'User account is disabled'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            
+        if not user.is_verified:
+            return Response(
+                {'error': 'Please verify your email first'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not user.is_approved:
+            return Response(
+                {'error': 'Account approval pending'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         # Generate tokens
         refresh = RefreshToken.for_user(user)
@@ -398,4 +464,188 @@ def login_user(request):
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+# New admin views
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def approve_organization(request):
+    """Admin endpoint to approve an organization"""
+    try:
+        if request.user.role != 'ADMIN':
+            return Response(
+                {'error': 'Only admins can approve organizations'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response(
+                {'error': 'User ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+            if user.role not in ['NGO', 'LAW_ENFORCEMENT']:
+                return Response(
+                    {'error': 'User is not an organization'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user.is_approved = True
+            user.save()
+
+            # Send approval email
+            subject = 'Organization Approval Notification'
+            message = f"""
+            Dear {user.get_full_name()},
+            
+            Your organization {user.organization} has been approved. You can now login to the system.
+            
+            Regards,
+            The Team
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+
+            return Response({
+                'message': 'Organization approved successfully',
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_organizations(request):
+    """Get list of all organizations"""
+    try:
+        if request.user.role != 'ADMIN':
+            return Response(
+                {'error': 'Only admins can view organizations'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        organizations = User.objects.filter(role__in=['NGO', 'LAW_ENFORCEMENT'])
+        serializer = UserSerializer(organizations, many=True)
+        return Response(serializer.data)
+
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+class CollaborationViewSet(viewsets.ModelViewSet):
+    serializer_class = CollaborationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.role not in ['NGO', 'LAW_ENFORCEMENT']:
+            return Collaboration.objects.none()
+        return Collaboration.objects.filter(
+            models.Q(initiator=user) | models.Q(collaborator=user)
+        )
+    
+    def perform_create(self, serializer):
+        # Validate that initiator is either NGO or Police
+        user = self.request.user
+        if user.role not in ['NGO', 'LAW_ENFORCEMENT']:
+            raise serializers.ValidationError(
+                "Only NGOs and Law Enforcement can initiate collaborations"
+            )
+        
+        collaborator_id = self.request.data.get('collaborator')
+        try:
+            collaborator = User.objects.get(id=collaborator_id)
+            if collaborator.role not in ['NGO', 'LAW_ENFORCEMENT']:
+                raise serializers.ValidationError(
+                    "Can only collaborate with NGOs or Law Enforcement"
+                )
+            if collaborator == user:
+                raise serializers.ValidationError(
+                    "Cannot collaborate with yourself"
+                )
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Collaborator not found")
+            
+        serializer.save(initiator=user, collaborator=collaborator)
+    
+    @action(detail=True, methods=['post'])
+    def send_message(self, request, pk=None):
+        collaboration = self.get_object()
+        if request.user not in [collaboration.initiator, collaboration.collaborator]:
+            return Response(
+                {'error': 'Not authorized'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        message_data = {
+            'collaboration': collaboration.id,
+            'sender': request.user.id,
+            'message': request.data.get('message'),
+            'file_attachment': request.FILES.get('file_attachment')
+        }
+        
+        serializer = CollaborationMessageSerializer(data=message_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        collaboration = self.get_object()
+        if request.user not in [collaboration.initiator, collaboration.collaborator]:
+            return Response(
+                {'error': 'Not authorized'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        status = request.data.get('status')
+        if status not in dict(Collaboration.STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        collaboration.status = status
+        collaboration.save()
+        
+        # Send notification to other party
+        other_party = (collaboration.initiator 
+                      if request.user == collaboration.collaborator 
+                      else collaboration.collaborator)
+        
+        if other_party.notification_preferences.get('email', False):
+            send_mail(
+                subject=f'Collaboration Status Update - Case #{collaboration.id}',
+                message=f'The collaboration status has been updated to {status}.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[other_party.email],
+                fail_silently=True
+            )
+            
+        return Response(
+            CollaborationSerializer(collaboration).data,
+            status=status.HTTP_200_OK
         )
