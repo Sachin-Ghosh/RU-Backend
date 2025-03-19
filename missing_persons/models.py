@@ -21,6 +21,7 @@ class MissingPerson(models.Model):
         ('M', 'Male'),
         ('F', 'Female'),
         ('O', 'Other'),
+        ('U', 'Unknown'),
     ]
     
     STATUS_CHOICES = [
@@ -49,20 +50,35 @@ class MissingPerson(models.Model):
         ('OTHER', 'Other')
     ]
 
+    COMPLEXION_CHOICES = [
+        ('FAIR', 'Fair'),
+        ('MEDIUM', 'Medium'),
+        ('DARK', 'Dark'),
+        ('UNKNOWN', 'Unknown')
+    ]
+
     # Basic Information
     name = models.CharField(max_length=100)
-    age_when_missing = models.IntegerField()
-    date_of_birth = models.DateField()
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    age_when_missing = models.IntegerField(default=0)
+    date_of_birth = models.DateField(blank=True,null=True)
+    gender = models.CharField(
+        max_length=10, 
+        choices=GENDER_CHOICES,
+        default='U'
+    )
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
-    nationality = models.CharField(max_length=50, default='Indian')
+    nationality = models.CharField(max_length=50, default='Indian',blank=True)
     
     # Physical Characteristics
-    height = models.FloatField(help_text='Height in cm')
-    weight = models.FloatField(help_text='Weight in kg')
-    complexion = models.CharField(max_length=50)
+    height = models.FloatField(default=0)
+    weight = models.FloatField(default=0)
+    complexion = models.CharField(
+        max_length=10,
+        choices=COMPLEXION_CHOICES,
+        default='UNKNOWN'
+    )
     identifying_marks = models.TextField(blank=True)
-    physical_attributes = models.JSONField(default=dict)  # Store additional attributes
+    physical_attributes = models.JSONField(default=dict,blank=True)  # Store additional attributes
     
     # Images and Biometric Data
     recent_photo = models.ImageField(upload_to=photo_upload_path, null=True, blank=True)

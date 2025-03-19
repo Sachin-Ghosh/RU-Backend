@@ -16,8 +16,38 @@ class Sighting(models.Model):
         ('MEDIUM', 'Medium Confidence'),
         ('LOW', 'Low Confidence'),
     ]
+    
+    LOCATION_TYPES = [
+        ('INDOOR', 'Indoor'),
+        ('OUTDOOR', 'Outdoor'),
+        ('VEHICLE', 'Vehicle'),
+        ('PUBLIC_TRANSPORT', 'Public Transport'),
+        ('OTHER', 'Other')
+    ]
 
-    missing_person = models.ForeignKey('missing_persons.MissingPerson', on_delete=models.CASCADE)
+    CROWD_DENSITY = [
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+        ('VERY_HIGH', 'Very High'),
+        ('UNKNOWN', 'Unknown'),
+    ]
+
+    COMPANION_TYPES = [
+        ('ALONE', 'Alone'),
+        ('WITH_ADULT', 'With Adult'),
+        ('WITH_CHILDREN', 'With Children'),
+        ('WITH_GROUP', 'With Group'),
+        ('UNSURE', 'Unsure')
+    ]
+
+    missing_person = models.ForeignKey(
+        'missing_persons.MissingPerson',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sightings'
+    )
     reporter = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -42,6 +72,14 @@ class Sighting(models.Model):
     wearing = models.TextField(blank=True)
     accompanied_by = models.TextField(blank=True)
     direction_headed = models.CharField(max_length=100, blank=True)
+    
+    # New fields
+    location_type = models.CharField(max_length=20, choices=LOCATION_TYPES, default='UNKNOWN')
+    crowd_density = models.CharField(max_length=20, choices=CROWD_DENSITY, default='UNKNOWN')
+    observed_behavior = models.TextField(blank=True)
+    confidence_level_numeric = models.FloatField(default=0)
+    willing_to_contact = models.BooleanField(default=True)
+    companions = models.CharField(max_length=20, choices=COMPANION_TYPES, default='UNSURE')
     
     # Evidence
     photo = models.ImageField(upload_to='sightings/photos/', null=True, blank=True)
