@@ -10,13 +10,17 @@ from django.utils import timezone
 import random
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 import logging
 from datetime import timedelta
 from authentication.models import OTPVerification
+from accounts.models import FamilyGroup, FamilyMember, VerificationDocument
+from django.db.models import Count, Q
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()  # Get the correct User model
 
 class OTPService:
     @staticmethod
@@ -29,7 +33,6 @@ class OTPService:
             logger.info(f"Generating OTP for {phone_or_email}: {otp}")
             
             # Get user instance
-            from accounts.models import User
             try:
                 user = User.objects.get(email=phone_or_email)
             except User.DoesNotExist:
@@ -79,7 +82,6 @@ class OTPService:
             logger.info(f"Verifying OTP for {phone_or_email}. Provided: {otp}")
             
             # Get user and check OTP
-            from accounts.models import User
             try:
                 user = User.objects.get(email=phone_or_email)
                 otp_record = OTPVerification.objects.filter(
@@ -260,4 +262,96 @@ class RegistrationService:
                     if os.path.exists(temp_file):
                         os.unlink(temp_file)
                 except Exception as e:
-                    print(f"Error deleting temporary file {temp_file}: {str(e)}") 
+                    print(f"Error deleting temporary file {temp_file}: {str(e)}")
+
+class UserAnalyticsService:
+    @staticmethod
+    def get_user_statistics():
+        """Get comprehensive user statistics"""
+        try:
+            # Basic user counts
+            total_users = User.objects.all().count()
+            logger.info(f"Total users: {total_users}")  # Add logging
+            
+            # Role distribution
+            role_stats = {
+                'citizen': User.objects.filter(role='CITIZEN').count(),
+                'ngo': User.objects.filter(role='NGO').count(),
+                'law_enforcement': User.objects.filter(role='LAW_ENFORCEMENT').count(),
+                'admin': User.objects.filter(role='ADMIN').count()
+            }
+            logger.info(f"Role stats: {role_stats}")  # Add logging
+            
+            # Verification status
+            verification_stats = {
+                'verified': User.objects.filter(is_verified=True).count(),
+                'unverified': User.objects.filter(is_verified=False).count()
+            }
+            
+            # Organization stats
+            org_stats = {
+                'total': User.objects.filter(role__in=['NGO', 'LAW_ENFORCEMENT']).count(),
+                'approved': User.objects.filter(
+                    role__in=['NGO', 'LAW_ENFORCEMENT'],
+                    is_approved=True
+                ).count(),
+                'pending': User.objects.filter(
+                    role__in=['NGO', 'LAW_ENFORCEMENT'],
+                    is_approved=False
+                ).count()
+            }
+            
+            # Active/Inactive stats
+            active_stats = {
+                'active': User.objects.filter(is_active=True).count(),
+                'inactive': User.objects.filter(is_active=False).count()
+            }
+            
+            # Document verification stats
+            doc_stats = {
+                'total': VerificationDocument.objects.all().count(),
+                'verified': VerificationDocument.objects.filter(is_verified=True).count(),
+                'pending': VerificationDocument.objects.filter(is_verified=False).count()
+            }
+            
+            # Aadhaar verification stats
+            aadhaar_stats = {
+                'total': AadhaarProfile.objects.all().count(),
+                'active': AadhaarProfile.objects.filter(is_active=True).count()
+            }
+            
+            # Family stats
+            family_stats = {
+                'total_groups': FamilyGroup.objects.all().count(),
+                'total_members': FamilyMember.objects.all().count()
+            }
+            
+            # Recent registrations (last 30 days)
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            recent_stats = {
+                'total': User.objects.filter(date_joined__gte=thirty_days_ago).count(),
+                'verified': User.objects.filter(
+                    date_joined__gte=thirty_days_ago,
+                    is_verified=True
+                ).count()
+            }
+            
+            statistics = {
+                'total_users': total_users,
+                'roles': role_stats,
+                'verification': verification_stats,
+                'organizations': org_stats,
+                'activity': active_stats,
+                'documents': doc_stats,
+                'aadhaar': aadhaar_stats,
+                'families': family_stats,
+                'recent_registrations': recent_stats
+            }
+            
+            logger.info("Generated statistics successfully")
+            return statistics
+            
+        except Exception as e:
+            logger.error(f"Error in get_user_statistics: {str(e)}")
+            logger.exception("Full traceback:")  # This will log the full traceback
+            return None 

@@ -14,7 +14,7 @@ from .serializers import (
     UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
     FamilyGroupSerializer, FamilyMemberSerializer,CollaborationMessageSerializer,CollaborationSerializer
 )
-from .services import RegistrationService, OTPService
+from .services import RegistrationService, OTPService, UserAnalyticsService
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 from django.conf import settings
@@ -25,6 +25,7 @@ from accounts import models
 
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -250,7 +251,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # Basic validation
             required_fields = [
                 'organization_name', 'email', 'password', 'phone_number', 'role',
-                'first_name', 'last_name'  # Added personal details
+                'first_name', 'last_name'
             ]
             for field in required_fields:
                 if not request.data.get(field):
@@ -266,9 +267,9 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Create user data with personal details
+            # Create user data
             user_data = {
-                'username': request.data.get('email'),  # Use email as username
+                'username': request.data.get('email'),
                 'email': request.data.get('email'),
                 'password': request.data.get('password'),
                 'phone_number': request.data.get('phone_number'),
@@ -276,23 +277,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 'organization': request.data.get('organization_name'),
                 'first_name': request.data.get('first_name'),
                 'last_name': request.data.get('last_name'),
-                'middle_name': request.data.get('middle_name', ''),  # Optional
-                'is_approved': False,  # Requires admin approval
-                'is_verified': False,  # Requires email verification
+                'middle_name': request.data.get('middle_name', ''),
+                'is_approved': False,
+                'is_verified': False,
                 'organization_latitude': request.data.get('organization_latitude'),
                 'organization_longitude': request.data.get('organization_longitude'),
                 'organization_location': request.data.get('organization_location'),
             }
 
-            # Handle verification documents
-            verification_docs = request.FILES.getlist('verification_documents')
-            if not verification_docs:
-                return Response(
-                    {'error': 'Verification documents are required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user_serializer = UserSerializer(data=user_data)
+            user_serializer = UserSerializer(data=user_data, context={'request': request})
             if not user_serializer.is_valid():
                 return Response(
                     user_serializer.errors,
@@ -300,6 +293,17 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
             
             user = user_serializer.save()
+
+            # Handle verification documents
+            verification_docs = request.FILES.getlist('verification_documents')
+            if verification_docs:
+                from accounts.models import VerificationDocument
+                for doc in verification_docs:
+                    VerificationDocument.objects.create(
+                        user=user,
+                        document=doc,
+                        document_type='ORGANIZATION_VERIFICATION'
+                    )
 
             # Send verification email
             otp_service = OTPService()
@@ -310,9 +314,11 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
+            # Get updated user data with verification documents
+            updated_serializer = UserSerializer(user, context={'request': request})
             return Response({
                 'message': 'Organization registered successfully. Please verify your email with the OTP sent.',
-                'user': UserSerializer(user).data
+                'user': updated_serializer.data
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -321,6 +327,45 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['GET'])
+    def analytics(self, request):
+        """Get user analytics"""
+        try:
+            if not request.user.is_authenticated:
+                return Response(
+                    {'error': 'Authentication required'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            if request.user.role != 'ADMIN':
+                return Response(
+                    {'error': 'Only admins can access analytics'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            logger.info(f"Generating analytics for admin user: {request.user.username}")
+            
+            analytics_service = UserAnalyticsService()
+            statistics = analytics_service.get_user_statistics()
+            
+            if statistics is not None:
+                logger.info("Successfully generated analytics")
+                return Response(statistics, status=status.HTTP_200_OK)
+            
+            logger.error("Failed to generate statistics - returned None")
+            return Response(
+                {'error': 'Failed to generate statistics. Please check server logs.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in analytics view: {str(e)}")
+            logger.exception("Full traceback:")
+            return Response(
+                {'error': f'Error generating analytics: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 class AadhaarProfileViewSet(viewsets.ModelViewSet):
@@ -403,24 +448,33 @@ class FamilyViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_user(request):
-    """
-    Login API that returns JWT tokens and user data
-    """
+    """Login API that accepts both username and email"""
     try:
-        username = request.data.get('username')
+        username_or_email = request.data.get('username')
         password = request.data.get('password')
 
-        # Validate input
-        if not username or not password:
+        if not username_or_email or not password:
             return Response(
-                {'error': 'Please provide both username and password'},
+                {'error': 'Please provide both username/email and password'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Authenticate user
-        user = authenticate(username=username, password=password)
+        # Try to get user by username or email
+        try:
+            if '@' in username_or_email:
+                user = User.objects.get(email=username_or_email)
+            else:
+                user = User.objects.get(username=username_or_email)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
-        if user is None:
+        # Authenticate user
+        user = authenticate(username=user.username, password=password)
+
+        if not user:
             return Response(
                 {'error': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -431,14 +485,14 @@ def login_user(request):
                 {'error': 'User account is disabled'},
                 status=status.HTTP_403_FORBIDDEN
             )
-            
+
         if not user.is_verified:
             return Response(
                 {'error': 'Please verify your email first'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        if not user.is_approved:
+        if not user.is_approved and user.role in ['NGO', 'LAW_ENFORCEMENT']:
             return Response(
                 {'error': 'Account approval pending'},
                 status=status.HTTP_403_FORBIDDEN
@@ -446,18 +500,14 @@ def login_user(request):
 
         # Generate tokens
         refresh = RefreshToken.for_user(user)
-        
-        # Get user data
-        user_serializer = UserSerializer(user)
 
-        # Return response with tokens and user data
         return Response({
             'message': 'Login successful',
             'tokens': {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             },
-            'user': user_serializer.data
+            'user': UserDetailSerializer(user).data
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -535,23 +585,20 @@ def approve_organization(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_organizations(request):
-    """Get list of all organizations"""
+    """List all organizations (NGOs and Law Enforcement)"""
     try:
-        if request.user.role != 'ADMIN':
-            return Response(
-                {'error': 'Only admins can view organizations'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         organizations = User.objects.filter(role__in=['NGO', 'LAW_ENFORCEMENT'])
-        serializer = UserSerializer(organizations, many=True)
-        return Response(serializer.data)
-
+        serializer = UserSerializer(organizations, many=True, context={'request': request})
+        
+        return Response({
+            'count': organizations.count(),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+        
     except Exception as e:
-        return Response(
-            {'error': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
 class CollaborationViewSet(viewsets.ModelViewSet):

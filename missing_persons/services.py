@@ -495,4 +495,91 @@ class MissingPersonService:
                         document.missing_person.save()
 
         except Exception as e:
-            print(f"Error matching Aadhaar document: {str(e)}") 
+            print(f"Error matching Aadhaar document: {str(e)}")
+
+    @staticmethod
+    def get_all_missing_persons(filters=None, search_query=None, sort_by=None):
+        """
+        Get list of all missing persons with optional filtering, searching and sorting
+        
+        Args:
+            filters (dict): Filter parameters (e.g., status, gender, age_range)
+            search_query (str): Search term for name or case number
+            sort_by (str): Field to sort by (e.g., 'created_at', '-created_at' for descending)
+        
+        Returns:
+            QuerySet: Filtered and sorted queryset of missing persons
+        """
+        queryset = MissingPerson.objects.all()
+
+        # Apply filters
+        if filters:
+            if filters.get('status'):
+                queryset = queryset.filter(status=filters['status'])
+            
+            if filters.get('gender'):
+                queryset = queryset.filter(gender=filters['gender'])
+            
+            if filters.get('age_range'):
+                min_age, max_age = filters['age_range']
+                queryset = queryset.filter(age_when_missing__range=(min_age, max_age))
+            
+            if filters.get('location'):
+                queryset = queryset.filter(
+                    last_seen_location__icontains=filters['location']
+                )
+            
+            if filters.get('date_range'):
+                start_date, end_date = filters['date_range']
+                queryset = queryset.filter(
+                    last_seen_date__range=(start_date, end_date)
+                )
+
+        # Apply search
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(case_number__icontains=search_query) |
+                Q(aadhaar_number__icontains=search_query)
+            )
+
+        # Apply sorting
+        if sort_by:
+            queryset = queryset.order_by(sort_by)
+        else:
+            # Default sorting by created date, newest first
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
+
+    @staticmethod
+    def get_missing_persons_statistics():
+        """
+        Get statistics about missing persons
+        """
+        total_cases = MissingPerson.objects.count()
+        active_cases = MissingPerson.objects.filter(status='MISSING').count()
+        found_cases = MissingPerson.objects.filter(status='FOUND').count()
+        
+        # Gender distribution
+        gender_stats = MissingPerson.objects.values('gender').annotate(
+            count=models.Count('id')
+        )
+        
+        # Age group distribution
+        age_stats = {
+            'children': MissingPerson.objects.filter(age_when_missing__lt=18).count(),
+            'adults': MissingPerson.objects.filter(
+                age_when_missing__gte=18,
+                age_when_missing__lt=60
+            ).count(),
+            'elderly': MissingPerson.objects.filter(age_when_missing__gte=60).count()
+        }
+        
+        return {
+            'total_cases': total_cases,
+            'active_cases': active_cases,
+            'found_cases': found_cases,
+            'gender_distribution': list(gender_stats),
+            'age_distribution': age_stats
+        } 

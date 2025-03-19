@@ -3,18 +3,34 @@
 from rest_framework import serializers
 from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
 
+class AadhaarProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AadhaarProfile
+        fields = (
+            'id', 'user', 'aadhaar_number_hash', 'name_in_aadhaar', 'dob',
+            'gender', 'address_in_aadhaar', 'last_verified',
+            'verification_count', 'is_active'
+        )
+        read_only_fields = (
+            'fingerprint_hash', 'document_hash', 'facial_signature',
+            'last_verified', 'verification_count'
+        )
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    aadhaar_profile = AadhaarProfileSerializer(read_only=True)
+    verification_documents = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = (
+        fields = [
             'id', 'username', 'email', 'password', 'first_name', 'middle_name', 'last_name',
             'role', 'phone_number', 'address', 'city', 'state', 'pincode', 'latitude', 'longitude', 
             'dob', 'gender', 'is_verified', 'is_approved', 'profile_picture', 'organization',
             'organization_id', 'created_at', 'updated_at', 'preferred_language', 'notification_preferences',
-            'organization_latitude', 'organization_longitude', 'organization_location'
-        )
+            'organization_latitude', 'organization_longitude', 'organization_location',
+            'aadhaar_profile', 'verification_documents'
+        ]
         read_only_fields = ('is_verified', 'is_approved', 'created_at', 'updated_at')
         extra_kwargs = {
             'password': {'write_only': True}
@@ -37,31 +53,47 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
         return user
 
-class AadhaarProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AadhaarProfile
-        fields = (
-            'id', 'user', 'aadhaar_number_hash', 'name_in_aadhaar', 'dob',
-            'gender', 'address_in_aadhaar', 'last_verified',
-            'verification_count', 'is_active'
-        )
-        read_only_fields = (
-            'fingerprint_hash', 'document_hash', 'facial_signature',
-            'last_verified', 'verification_count'
-        )
+    def get_verification_documents(self, obj):
+        docs = obj.user_verification_documents.all()
+        return [{
+            'id': doc.id,
+            'document_type': doc.document_type,
+            'document': self.context['request'].build_absolute_uri(doc.document.url) if doc.document else None,
+            'description': doc.description,
+            'uploaded_at': doc.uploaded_at,
+            'is_verified': doc.is_verified,
+            'verified_at': doc.verified_at
+        } for doc in docs]
+
         
 class UserDetailSerializer(serializers.ModelSerializer):
     aadhaar_profile = AadhaarProfileSerializer(read_only=True)
+    verification_documents = serializers.SerializerMethodField()
     families = serializers.SerializerMethodField()
-
     class Meta:
         model = User
-        fields = '__all__'
-        read_only_fields = ('is_verified', 'created_at', 'updated_at')
-        
-    def get_families(self, obj):
-        family_members = FamilyMember.objects.filter(user=obj)
-        return FamilyMemberSerializer(family_members, many=True).data
+        fields = [
+            'id', 'username', 'email', 'first_name', 'middle_name', 'last_name',
+            'phone_number', 'role', 'is_verified', 'is_approved', 'is_active',
+            'address', 'city', 'state', 'pincode', 'latitude', 'longitude',
+            'organization', 'organization_location', 'organization_latitude',
+            'organization_longitude', 'profile_picture', 'aadhaar_profile',
+            'verification_documents'
+        ]
+    
+    def get_verification_documents(self, obj):
+        """Get verification documents if they exist"""
+        if hasattr(obj, 'verification_documents'):
+            return [
+                {
+                    'id': doc.id,
+                    'document_type': doc.document_type,
+                    'document': doc.document.url if doc.document else None,
+                    'uploaded_at': doc.uploaded_at
+                }
+                for doc in obj.verification_documents.all()
+            ]
+        return None
 
 class FamilyGroupSerializer(serializers.ModelSerializer):
     class Meta:

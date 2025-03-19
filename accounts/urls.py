@@ -13,7 +13,7 @@ router.register(r'collaborations', CollaborationViewSet, basename='collaboration
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('organizations/', views.list_organizations, name='list-organizations'),
     path('login/', views.login_user, name='login'),
     path('approve-organization/', views.approve_organization, name='approve-organization'),
-    path('organizations/', views.list_organizations, name='list_organizations'),
 ]

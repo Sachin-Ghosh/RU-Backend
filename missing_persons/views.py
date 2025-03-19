@@ -781,6 +781,66 @@ class MissingPersonViewSet(viewsets.ModelViewSet):
             print(f"Publishing error: {str(e)}")
             return None
 
+    @action(detail=False, methods=['GET'])
+    def list_all(self, request):
+        """Get list of all missing persons with optional filters"""
+        try:
+            # Get filter parameters from query string
+            filters = {
+                'status': request.query_params.get('status'),
+                'gender': request.query_params.get('gender'),
+                'location': request.query_params.get('location'),
+            }
+            
+            # Remove None values
+            filters = {k: v for k, v in filters.items() if v is not None}
+            
+            # Get search query
+            search_query = request.query_params.get('search')
+            
+            # Get sort parameter
+            sort_by = request.query_params.get('sort_by')
+            
+            # Get missing persons
+            missing_person_service = MissingPersonService()
+            queryset = missing_person_service.get_all_missing_persons(
+                filters=filters,
+                search_query=search_query,
+                sort_by=sort_by
+            )
+            
+            # Get statistics if requested
+            if request.query_params.get('include_stats'):
+                statistics = missing_person_service.get_missing_persons_statistics()
+            else:
+                statistics = None
+            
+            # Paginate results
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response_data = {
+                    'results': serializer.data
+                }
+                if statistics:
+                    response_data['statistics'] = statistics
+                return self.get_paginated_response(response_data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            response_data = {
+                'results': serializer.data
+            }
+            if statistics:
+                response_data['statistics'] = statistics
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class MissingPersonDocumentViewSet(viewsets.ModelViewSet):
     queryset = MissingPersonDocument.objects.all()
     serializer_class = MissingPersonDocumentSerializer

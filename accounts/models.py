@@ -2,6 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
 import uuid
+from django.utils.translation import gettext_lazy as _
+
+def document_upload_path(instance, filename):
+    # Generate path for document uploads
+    return f'documents/organization_docs/{filename}'
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -38,6 +43,7 @@ class User(AbstractUser):
     organization_latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     organization_longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     organization_location = models.CharField(max_length=100, blank=True)
+    # verification_documents = models.FileField(upload_to=document_upload_path, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -175,3 +181,36 @@ class CollaborationMessage(models.Model):
     
     def __str__(self):
         return f"Message in {self.collaboration} by {self.sender}"
+
+class VerificationDocument(models.Model):
+    DOCUMENT_TYPES = (
+        ('ORGANIZATION_VERIFICATION', 'Organization Verification'),
+        ('IDENTITY_PROOF', 'Identity Proof'),
+        ('ADDRESS_PROOF', 'Address Proof'),
+        ('OTHER', 'Other')
+    )
+
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='user_verification_documents'
+    )
+    document = models.FileField(upload_to='verification_docs/')
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    description = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='verified_user_documents'
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.document_type} - {self.uploaded_at}"

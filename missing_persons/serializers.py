@@ -50,7 +50,7 @@ class MissingPersonSerializer(serializers.ModelSerializer):
             'secondary_contact_phone', 'reporter', 'assigned_officer', 'assigned_ngo', 'documents', 'recent_photo',
             'last_known_latitude', 'last_known_longitude',
             'aadhaar_number', 'aadhaar_photo', 'family_group', 
-            'distance', 'family_members','aadhaar_number_hash','reporter_type'
+            'distance', 'family_members','aadhaar_number_hash','reporter_type',
             'created_at', 'updated_at'
         ]
         read_only_fields = ('case_number', 'reporter', 'created_at', 'updated_at', 'documents')
