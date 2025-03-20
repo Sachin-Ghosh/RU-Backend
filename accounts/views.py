@@ -522,12 +522,14 @@ def login_user(request):
 def approve_organization(request):
     """Admin endpoint to approve an organization"""
     try:
-        if request.user.role != 'ADMIN':
+        # Check if user is admin
+        if not request.user.is_staff and request.user.role != 'ADMIN':
             return Response(
                 {'error': 'Only admins can approve organizations'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # Get user_id from request data
         user_id = request.data.get('user_id')
         if not user_id:
             return Response(
@@ -536,47 +538,70 @@ def approve_organization(request):
             )
 
         try:
+            # Convert user_id to integer if it's a string
+            user_id = int(user_id)
             user = User.objects.get(id=user_id)
+            
+            # Verify this is an organization account
             if user.role not in ['NGO', 'LAW_ENFORCEMENT']:
                 return Response(
                     {'error': 'User is not an organization'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Update approval status
             user.is_approved = True
             user.save()
 
             # Send approval email
-            subject = 'Organization Approval Notification'
-            message = f"""
-            Dear {user.get_full_name()},
-            
-            Your organization {user.organization} has been approved. You can now login to the system.
-            
-            Regards,
-            The Team
-            """
-            
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
+            try:
+                subject = 'Organization Account Approved'
+                message = f"""
+                Dear {user.get_full_name()},
+
+                Your organization account ({user.organization}) has been approved. 
+                You can now log in to the system and access all features.
+
+                Best regards,
+                Admin Team
+                """
+                
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                # Log email error but don't fail the request
+                logger.error(f"Failed to send approval email to {user.email}: {str(e)}")
 
             return Response({
                 'message': 'Organization approved successfully',
-                'user': UserSerializer(user).data
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'organization': user.organization,
+                    'role': user.role,
+                    'is_approved': user.is_approved
+                }
             }, status=status.HTTP_200_OK)
 
         except User.DoesNotExist:
             return Response(
-                {'error': 'User not found'},
+                {'error': f'User with ID {user_id} not found'},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        except ValueError:
+            return Response(
+                {'error': 'Invalid user ID format'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     except Exception as e:
+        logger.error(f"Error in approve_organization: {str(e)}")
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

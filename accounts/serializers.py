@@ -78,7 +78,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'address', 'city', 'state', 'pincode', 'latitude', 'longitude',
             'organization', 'organization_location', 'organization_latitude',
             'organization_longitude', 'profile_picture', 'aadhaar_profile',
-            'verification_documents'
+            'verification_documents', 'families'
         ]
     
     def get_verification_documents(self, obj):
@@ -94,6 +94,10 @@ class UserDetailSerializer(serializers.ModelSerializer):
                 for doc in obj.verification_documents.all()
             ]
         return None
+
+    def get_families(self, obj):
+        """Get the user's families"""
+        return FamilyGroupSerializer(obj.families.all(), many=True).data
 
 class FamilyGroupSerializer(serializers.ModelSerializer):
     class Meta:
