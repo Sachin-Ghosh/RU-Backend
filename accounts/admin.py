@@ -5,7 +5,8 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage, Notification
+from django import forms
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
@@ -110,3 +111,43 @@ class CollaborationMessageAdmin(admin.ModelAdmin):
     list_display = ('collaboration', 'sender', 'sent_at')
     list_filter = ('sent_at',)
     search_fields = ('message', 'sender__username')
+
+class NotificationAdminForm(forms.ModelForm):
+    target_roles = forms.MultipleChoiceField(
+        choices=Notification.ROLE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        help_text='Select which user roles should receive this notification'
+    )
+
+    class Meta:
+        model = Notification
+        fields = '__all__'
+
+    def clean_target_roles(self):
+        """Convert selected roles to list for JSON field"""
+        return list(self.cleaned_data['target_roles'])
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    form = NotificationAdminForm
+    list_display = ['title', 'priority', 'created_at', 'expires_at', 'is_active']
+    list_filter = ['priority', 'is_active']
+    search_fields = ['title', 'message']
+    readonly_fields = ['created_at']
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'message', 'priority')
+        }),
+        ('Target Audience', {
+            'fields': ('target_roles',),
+            'description': 'Select which user roles should receive this notification'
+        }),
+        ('Settings', {
+            'fields': ('is_active', 'expires_at', 'created_by')
+        })
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not change:  # If creating new notification
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)

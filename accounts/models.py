@@ -214,3 +214,44 @@ class VerificationDocument(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.document_type} - {self.uploaded_at}"
+
+class Notification(models.Model):
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low Priority'),
+        ('MEDIUM', 'Medium Priority'),
+        ('HIGH', 'High Priority'),
+        ('CRITICAL', 'Critical')
+    ]
+
+    ROLE_CHOICES = [
+        ('ADMIN', 'Administrator'),
+        ('LAW_ENFORCEMENT', 'Law Enforcement'),
+        ('NGO', 'NGO Worker'),
+        ('CITIZEN', 'Citizen'),
+    ]
+
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='LOW')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey('User', on_delete=models.CASCADE, related_name='created_notifications')
+    target_roles = models.JSONField(
+        default=list,
+        help_text='List of roles that should receive this notification'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.priority})"
+
+    def save(self, *args, **kwargs):
+        # Ensure target_roles is always a list
+        if isinstance(self.target_roles, str):
+            self.target_roles = [self.target_roles]
+        elif not isinstance(self.target_roles, list):
+            self.target_roles = list(self.target_roles)
+        super().save(*args, **kwargs)

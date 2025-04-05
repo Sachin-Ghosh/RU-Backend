@@ -9,15 +9,23 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model, authenticate
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage, Notification
 from .serializers import (
     UserSerializer, UserDetailSerializer, AadhaarProfileSerializer,
-    FamilyGroupSerializer, FamilyMemberSerializer,CollaborationMessageSerializer,CollaborationSerializer
+    FamilyGroupSerializer, FamilyMemberSerializer,CollaborationMessageSerializer,CollaborationSerializer,
+    NotificationSerializer, DashboardSerializer
 )
 from .services import RegistrationService, OTPService, UserAnalyticsService
 from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 from django.conf import settings
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+import random
+from missing_persons.models import MissingPerson
+from missing_persons.serializers import MissingPersonSerializer
+from sightings.models import Sighting
 
 from accounts import serializers
 
@@ -721,3 +729,215 @@ class CollaborationViewSet(viewsets.ModelViewSet):
             CollaborationSerializer(collaboration).data,
             status=status.HTTP_200_OK
         )
+
+class DashboardViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_nearby_cases(self, queryset, lat, lon, radius_km):
+        """Calculate nearby cases using Haversine formula"""
+        from math import radians, sin, cos, sqrt, asin
+        
+        radius = 6371  # Earth's radius in kilometers
+
+        # Convert lat/lon to radians
+        lat_rad = radians(float(lat))
+        lon_rad = radians(float(lon))
+
+        # Raw SQL for Haversine formula
+        queryset = queryset.extra(
+            select={
+                'distance': f"""
+                    {radius} * 2 * asin(
+                        sqrt(
+                            pow(sin(({lat_rad} - radians(CAST(last_known_latitude AS FLOAT))) / 2), 2) +
+                            cos({lat_rad}) * cos(radians(CAST(last_known_latitude AS FLOAT))) *
+                            pow(sin(({lon_rad} - radians(CAST(last_known_longitude AS FLOAT))) / 2), 2)
+                        )
+                    )
+                """
+            },
+            where=[
+                f"""
+                last_known_latitude IS NOT NULL
+                AND last_known_longitude IS NOT NULL
+                AND {radius} * 2 * asin(
+                    sqrt(
+                        pow(sin(({lat_rad} - radians(CAST(last_known_latitude AS FLOAT))) / 2), 2) +
+                        cos({lat_rad}) * cos(radians(CAST(last_known_latitude AS FLOAT))) *
+                        pow(sin(({lon_rad} - radians(CAST(last_known_longitude AS FLOAT))) / 2), 2)
+                    )
+                ) <= %s
+                """
+            ],
+            params=[radius_km],
+            order_by=['distance']
+        )
+
+        return queryset
+
+    def list(self, request):
+        try:
+            user = request.user
+            current_time = timezone.now()
+
+            # Get active notifications for user's role
+            notifications = []
+            all_notifications = Notification.objects.filter(
+                Q(expires_at__gt=current_time) | Q(expires_at__isnull=True),
+                is_active=True
+            ).order_by('-priority', '-created_at')
+            for notification in all_notifications:
+                if user.role in notification.target_roles:
+                    notifications.append(notification)
+                if len(notifications) >= 5:
+                    break
+
+            # Get nearby cases (within 50km)
+            nearby_cases = []
+            if user.latitude and user.longitude:
+                all_cases = MissingPerson.objects.filter(status='MISSING')
+                nearby_cases = self.get_nearby_cases(
+                    all_cases, 
+                    user.latitude, 
+                    user.longitude, 
+                    50
+                )[:3]
+
+            # Get 3 random missing persons from anywhere
+            random_cases = MissingPerson.objects.filter(
+                status='MISSING'
+            ).order_by('?')[:3]  # order_by('?') is for random selection
+
+            # Generate statistics
+            statistics = self.generate_statistics()
+
+            # Generate random recent activity
+            recent_activity = self.generate_recent_activity()
+
+            # Prepare response data
+            response_data = {
+                'user': {
+                    'id': user.id,
+                    'name': f"{user.first_name} {user.last_name}",
+                    'role': user.role,
+                    'organization': user.organization,
+                    'profile_picture': request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None,
+                },
+                'notifications': NotificationSerializer(notifications, many=True).data,
+                'nearby_cases': MissingPersonSerializer(nearby_cases, many=True).data,
+                'random_cases': MissingPersonSerializer(random_cases, many=True).data,  # Added random cases
+                'statistics': statistics,
+                'recent_activity': recent_activity
+            }
+
+            return Response(response_data)
+
+        except Exception as e:
+            logger.error(f"Dashboard error: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def generate_statistics(self):
+        """Generate dashboard statistics"""
+        try:
+            # Time periods
+            now = timezone.now()
+            last_month = now - timedelta(days=30)
+
+            # Get current counts
+            active_cases = MissingPerson.objects.filter(status='MISSING').count()
+            resolved_cases = MissingPerson.objects.filter(status='FOUND').count()
+            total_ngos = User.objects.filter(role='NGO', is_approved=True).count()
+            total_police = User.objects.filter(role='LAW_ENFORCEMENT', is_approved=True).count()
+            total_sightings = Sighting.objects.count()
+
+            # Get last month's counts for comparison
+            last_month_active = MissingPerson.objects.filter(
+                status='MISSING',
+                created_at__lt=last_month
+            ).count()
+            last_month_resolved = MissingPerson.objects.filter(
+                status='FOUND',
+                created_at__lt=last_month
+            ).count()
+
+            # Calculate percentage changes
+            active_change = ((active_cases - last_month_active) / last_month_active * 100) if last_month_active > 0 else 0
+            resolved_change = ((resolved_cases - last_month_resolved) / last_month_resolved * 100) if last_month_resolved > 0 else 0
+
+            return {
+                'active_cases': {
+                    'count': active_cases,
+                    'change': round(active_change, 1)
+                },
+                'resolved_cases': {
+                    'count': resolved_cases,
+                    'change': round(resolved_change, 1)
+                },
+                'total_ngos': total_ngos,
+                'total_police': total_police,
+                'total_sightings': total_sightings,
+                'verification_rate': {
+                    'verified': Sighting.objects.filter(verification_status='VERIFIED').count(),
+                    'pending': Sighting.objects.filter(verification_status='PENDING').count()
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error generating statistics: {str(e)}")
+            return {}
+
+    def generate_recent_activity(self):
+        """Generate random recent activity items"""
+        activities = [
+            {
+                'type': 'SEARCH_UPDATE',
+                'templates': [
+                    "Search area expanded for {name} in {location}",
+                    "New search team deployed for {name} in {location}",
+                    "Helicopter search initiated for {name} in {location}"
+                ]
+            },
+            {
+                'type': 'SIGHTING',
+                'templates': [
+                    "New sighting reported of {name} near {location}",
+                    "Possible sighting of {name} at {location}",
+                    "Witness reported seeing {name} in {location}"
+                ]
+            },
+            {
+                'type': 'CASE_UPDATE',
+                'templates': [
+                    "Case status updated for {name}",
+                    "New evidence found in {name}'s case",
+                    "Investigation progress made in {name}'s case"
+                ]
+            }
+        ]
+
+        # Get random missing persons
+        recent_cases = MissingPerson.objects.filter(
+            status='MISSING'
+        ).order_by('?')[:3]
+
+        recent_activity = []
+        for case in recent_cases:
+            activity_type = random.choice(activities)
+            template = random.choice(activity_type['templates'])
+            time_ago = random.randint(5, 120)
+            
+            activity = {
+                'type': activity_type['type'],
+                'message': template.format(
+                    name=case.name,
+                    location=case.last_seen_location
+                ),
+                'time_ago': f"{time_ago} minutes ago",
+                'case_id': case.id
+            }
+            recent_activity.append(activity)
+
+        return recent_activity

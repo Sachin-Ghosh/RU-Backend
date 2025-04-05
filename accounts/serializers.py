@@ -1,7 +1,10 @@
 # accounts/serializers.py
 
 from rest_framework import serializers
-from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage
+
+
+from .models import User, AadhaarProfile, FamilyGroup, FamilyMember,Collaboration,CollaborationMessage, Notification
+# from missing_persons.serializers import MissingPersonSerializer
 
 class AadhaarProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -146,3 +149,15 @@ class CollaborationSerializer(serializers.ModelSerializer):
             'id', 'initiator', 'collaborator', 'missing_person',
             'status', 'created_at', 'updated_at', 'notes', 'messages'
         )
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'priority', 'created_at', 'expires_at']
+
+class DashboardSerializer(serializers.Serializer):
+    user = UserSerializer()
+    notifications = NotificationSerializer(many=True)
+    # nearby_cases = MissingPersonSerializer(many=True)
+    statistics = serializers.DictField()
+    recent_activity = serializers.ListField()
