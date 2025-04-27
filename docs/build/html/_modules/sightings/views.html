@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sightings.views &#8212; Reunite 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sightings.views</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">filters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
+
+<span class="c1"># Create your views here.</span>
+<span class="c1"># sightings/views.py</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">viewsets</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">filters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">action</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.response</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.permissions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IsAuthenticated</span><span class="p">,</span> <span class="n">AllowAny</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_filters.rest_framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">DjangoFilterBackend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">rest_framework</span> <span class="k">as</span> <span class="n">django_filters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Count</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">accounts</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sighting</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.serializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SightingSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deepface</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepFace</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotificationService</span><span class="p">,</span> <span class="n">SightingService</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blockchain.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlockchainService</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">missing_persons.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MissingPerson</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">asin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiPartParser</span><span class="p">,</span> <span class="n">FormParser</span><span class="p">,</span> <span class="n">JSONParser</span>
+
+
+<span class="c1"># import face_recognition</span>
+
+<span class="c1"># First, create a filter set for Sighting</span>
+<div class="viewcode-block" id="SightingFilter">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingFilter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SightingFilter</span><span class="p">(</span><span class="n">django_filters</span><span class="o">.</span><span class="n">FilterSet</span><span class="p">):</span>
+    <span class="n">start_date</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">DateTimeFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;gte&#39;</span><span class="p">)</span>
+    <span class="n">end_date</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">DateTimeFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;lte&#39;</span><span class="p">)</span>
+    <span class="n">location</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">CharFilter</span><span class="p">(</span><span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;icontains&#39;</span><span class="p">)</span>
+    <span class="n">verification_status</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">ChoiceFilter</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">Sighting</span><span class="o">.</span><span class="n">VERIFICATION_STATUS</span><span class="p">)</span>
+    <span class="n">confidence_level</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">ChoiceFilter</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">Sighting</span><span class="o">.</span><span class="n">CONFIDENCE_LEVELS</span><span class="p">)</span>
+    <span class="n">location_type</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">ChoiceFilter</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">Sighting</span><span class="o">.</span><span class="n">LOCATION_TYPES</span><span class="p">)</span>
+    <span class="n">crowd_density</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">ChoiceFilter</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">Sighting</span><span class="o">.</span><span class="n">CROWD_DENSITY</span><span class="p">)</span>
+    <span class="n">companions</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">ChoiceFilter</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="n">Sighting</span><span class="o">.</span><span class="n">COMPANION_TYPES</span><span class="p">)</span>
+    <span class="n">confidence_level_numeric_min</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">NumberFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;confidence_level_numeric&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;gte&#39;</span><span class="p">)</span>
+    <span class="n">confidence_level_numeric_max</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">NumberFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;confidence_level_numeric&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;lte&#39;</span><span class="p">)</span>
+    <span class="n">willing_to_contact</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">BooleanFilter</span><span class="p">()</span>
+    <span class="n">has_photo</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">BooleanFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;photo&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;isnull&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">missing_person_name</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">CharFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;missing_person__name&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;icontains&#39;</span><span class="p">)</span>
+    <span class="n">reporter_name</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">CharFilter</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;filter_reporter_name&#39;</span><span class="p">)</span>
+    <span class="n">distance</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">NumberFilter</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;filter_by_distance&#39;</span><span class="p">)</span>
+    <span class="n">latitude</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">NumberFilter</span><span class="p">()</span>
+    <span class="n">longitude</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">NumberFilter</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="SightingFilter.filter_reporter_name">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingFilter.filter_reporter_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_reporter_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">reporter__first_name__icontains</span><span class="o">=</span><span class="n">value</span><span class="p">)</span> <span class="o">|</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">reporter__last_name__icontains</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="SightingFilter.filter_by_distance">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingFilter.filter_by_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_by_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter sightings within specified kilometers of given lat/long&quot;&quot;&quot;</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;latitude&#39;</span><span class="p">)</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;longitude&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lat</span> <span class="ow">and</span> <span class="n">lon</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">asin</span>
+            
+            <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="mi">6371</span>  <span class="c1"># Earth&#39;s radius in kilometers</span>
+
+            <span class="c1"># Haversine formula</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">extra</span><span class="p">(</span>
+                <span class="n">select</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s2"> * 2 * ASIN(</span>
+<span class="s2">                        SQRT(</span>
+<span class="s2">                            POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2"> - ABS(latitude)) / 2), 2) +</span>
+<span class="s2">                            COS(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2">)) * </span>
+<span class="s2">                            COS(RADIANS(ABS(latitude))) * </span>
+<span class="s2">                            POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lon</span><span class="si">}</span><span class="s2"> - longitude) / 2), 2)</span>
+<span class="s2">                        )</span>
+<span class="s2">                    )</span>
+<span class="s2">                    &quot;&quot;&quot;</span>
+                <span class="p">}</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">distance__lte</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">queryset</span></div>
+
+
+<div class="viewcode-block" id="SightingFilter.Meta">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingFilter.Meta">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Sighting</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;verification_status&#39;</span><span class="p">,</span> <span class="s1">&#39;confidence_level&#39;</span><span class="p">,</span> <span class="s1">&#39;location_type&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;crowd_density&#39;</span><span class="p">,</span> <span class="s1">&#39;companions&#39;</span><span class="p">,</span> <span class="s1">&#39;willing_to_contact&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;missing_person&#39;</span><span class="p">,</span> <span class="s1">&#39;reporter&#39;</span>
+        <span class="p">]</span></div>
+</div>
+
+
+<div class="viewcode-block" id="SightingViewSet">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SightingViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Sighting</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-timestamp&#39;</span><span class="p">)</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">SightingSerializer</span>
+    <span class="n">filter_backends</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">django_filters</span><span class="o">.</span><span class="n">DjangoFilterBackend</span><span class="p">,</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">SearchFilter</span><span class="p">,</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">OrderingFilter</span>
+    <span class="p">]</span>
+    <span class="n">filterset_class</span> <span class="o">=</span> <span class="n">SightingFilter</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;location_details&#39;</span><span class="p">,</span> <span class="s1">&#39;wearing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;observed_behavior&#39;</span><span class="p">,</span> <span class="s1">&#39;missing_person__name&#39;</span>
+    <span class="p">]</span>
+    <span class="n">ordering_fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;confidence_level_numeric&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;verification_status&#39;</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="SightingViewSet.get_queryset">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.get_queryset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get queryset based on user role and permissions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">Sighting</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-timestamp&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># If user is not authenticated, return empty queryset</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Sighting</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+
+        <span class="c1"># If user is staff/admin, show all sightings</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s1">&#39;ADMIN&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">queryset</span>
+            
+        <span class="c1"># For NGOs and Law Enforcement, show sightings in their area</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NGO&#39;</span><span class="p">,</span> <span class="s1">&#39;LAW_ENFORCEMENT&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">latitude</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">longitude</span><span class="p">:</span>
+                <span class="n">nearby_sightings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_by_distance</span><span class="p">(</span>
+                    <span class="n">queryset</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span>
+                    <span class="n">radius_km</span><span class="o">=</span><span class="mi">50</span>  <span class="c1"># Configurable radius</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">nearby_sightings</span>
+            <span class="k">return</span> <span class="n">queryset</span>
+            
+        <span class="c1"># For regular users, show their own sightings and related sightings</span>
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">reporter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span> <span class="o">|</span>  <span class="c1"># Their own sightings</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">missing_person__reporter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span> <span class="o">|</span>  <span class="c1"># Sightings of their reported missing persons</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">missing_person__family_group__members</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>  <span class="c1"># Family group sightings</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.filter_by_distance">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.filter_by_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_by_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">radius_km</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter queryset by distance from given coordinates&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">asin</span>
+        
+        <span class="n">radius</span> <span class="o">=</span> <span class="mi">6371</span>  <span class="c1"># Earth&#39;s radius in kilometers</span>
+
+        <span class="c1"># Haversine formula</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">extra</span><span class="p">(</span>
+            <span class="n">select</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                </span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s2"> * 2 * ASIN(</span>
+<span class="s2">                    SQRT(</span>
+<span class="s2">                        POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2"> - ABS(latitude)) / 2), 2) +</span>
+<span class="s2">                        COS(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2">)) * </span>
+<span class="s2">                        COS(RADIANS(ABS(latitude))) * </span>
+<span class="s2">                        POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lon</span><span class="si">}</span><span class="s2"> - longitude) / 2), 2)</span>
+<span class="s2">                    )</span>
+<span class="s2">                )</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+            <span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">latitude__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">longitude__isnull</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">radius_km</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">extra</span><span class="p">(</span>
+                <span class="n">where</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                    </span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s2"> * 2 * ASIN(</span>
+<span class="s2">                        SQRT(</span>
+<span class="s2">                            POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2"> - ABS(latitude)) / 2), 2) +</span>
+<span class="s2">                            COS(RADIANS(</span><span class="si">{</span><span class="n">lat</span><span class="si">}</span><span class="s2">)) * </span>
+<span class="s2">                            COS(RADIANS(ABS(latitude))) * </span>
+<span class="s2">                            POWER(SIN(RADIANS(</span><span class="si">{</span><span class="n">lon</span><span class="si">}</span><span class="s2"> - longitude) / 2), 2)</span>
+<span class="s2">                        )</span>
+<span class="s2">                    ) &lt;= %s</span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="p">],</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="n">radius_km</span><span class="p">]</span>
+            <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;distance&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.list">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.list">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_queryset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">())</span>
+        
+        <span class="c1"># Get page size from query params or use default</span>
+        <span class="n">page_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page_size&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paginate_queryset</span><span class="p">(</span><span class="n">queryset</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">page</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_paginated_response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">queryset</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Add summary statistics</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;total_count&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;verified_count&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">verification_status</span><span class="o">=</span><span class="s1">&#39;VERIFIED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;pending_count&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">verification_status</span><span class="o">=</span><span class="s1">&#39;PENDING&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;with_photo_count&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">photo</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;high_confidence_count&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">confidence_level</span><span class="o">=</span><span class="s1">&#39;HIGH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;by_location_type&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;indoor&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">location_type</span><span class="o">=</span><span class="s1">&#39;INDOOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;outdoor&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">location_type</span><span class="o">=</span><span class="s1">&#39;OUTDOOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;vehicle&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">location_type</span><span class="o">=</span><span class="s1">&#39;VEHICLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;public_transport&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">location_type</span><span class="o">=</span><span class="s1">&#39;PUBLIC_TRANSPORT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;by_crowd_density&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;low&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">crowd_density</span><span class="o">=</span><span class="s1">&#39;LOW&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;medium&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">crowd_density</span><span class="o">=</span><span class="s1">&#39;MEDIUM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">crowd_density</span><span class="o">=</span><span class="s1">&#39;HIGH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;statistics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;page_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">page_size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="s1">&#39;statistics&#39;</span><span class="p">:</span> <span class="n">stats</span><span class="p">,</span>
+                <span class="s1">&#39;page_size&#39;</span><span class="p">:</span> <span class="n">page_size</span>
+            <span class="p">}</span>
+            
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
+    <span class="c1"># Add pagination settings</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.pagination</span><span class="w"> </span><span class="kn">import</span> <span class="n">PageNumberPagination</span>
+    
+<div class="viewcode-block" id="SightingViewSet.StandardResultsSetPagination">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.StandardResultsSetPagination">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">StandardResultsSetPagination</span><span class="p">(</span><span class="n">PageNumberPagination</span><span class="p">):</span>
+        <span class="n">page_size</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">page_size_query_param</span> <span class="o">=</span> <span class="s1">&#39;page_size&#39;</span>
+        <span class="n">max_page_size</span> <span class="o">=</span> <span class="mi">100</span></div>
+
+    
+    <span class="n">pagination_class</span> <span class="o">=</span> <span class="n">StandardResultsSetPagination</span>
+
+<div class="viewcode-block" id="SightingViewSet.get_permissions">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.get_permissions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allow anonymous users to create sightings,</span>
+<span class="sd">        but require authentication for other actions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span><span class="p">:</span>
+            <span class="n">permission_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">AllowAny</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">permission_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">IsAuthenticated</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">permission</span><span class="p">()</span> <span class="k">for</span> <span class="n">permission</span> <span class="ow">in</span> <span class="n">permission_classes</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="SightingViewSet.calculate_distance">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.calculate_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the great circle distance between two points </span>
+<span class="sd">        on the earth (specified in decimal degrees)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert decimal degrees to radians</span>
+        <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="p">[</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">])</span>
+        <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">radians</span><span class="p">,</span> <span class="p">[</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">])</span>
+
+        <span class="c1"># Haversine formula</span>
+        <span class="n">dlat</span> <span class="o">=</span> <span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span>
+        <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlon</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">asin</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="mi">6371</span>  <span class="c1"># Radius of earth in kilometers</span>
+        <span class="k">return</span> <span class="n">c</span> <span class="o">*</span> <span class="n">r</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.create">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.create">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Convert string &#39;true&#39;/&#39;false&#39; to boolean for willing_to_contact</span>
+        <span class="c1"># if &#39;willing_to_contact&#39; in request.data:</span>
+        <span class="c1">#     request.data._mutable = True</span>
+        <span class="c1">#     request.data[&#39;willing_to_contact&#39;] = request.data[&#39;willing_to_contact&#39;].lower() == &#39;true&#39;</span>
+        <span class="c1">#     request.data._mutable = False</span>
+
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;request&#39;</span><span class="p">:</span> <span class="n">request</span><span class="p">})</span>
+        <span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;data :</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing_person&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Handle case where no missing person exists but photo is provided</span>
+        <span class="n">missing_person_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing_person&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_person_id</span> <span class="ow">and</span> <span class="s1">&#39;photo&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">FILES</span><span class="p">:</span>
+            <span class="n">temp_missing_person</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Unidentified Person&quot;</span><span class="p">,</span>
+                <span class="n">case_number</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;TEMP-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;MISSING&quot;</span><span class="p">,</span>
+                <span class="n">last_seen_location</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;Unknown&#39;</span><span class="p">),</span>
+                <span class="n">last_seen_date</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+                <span class="n">reporter</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">age_when_missing</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># Default value for unidentified persons</span>
+                <span class="n">gender</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">,</span>    <span class="c1"># Default value</span>
+                <span class="n">height</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>           <span class="c1"># Default value</span>
+                <span class="n">weight</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>           <span class="c1"># Default value</span>
+                <span class="n">complexion</span><span class="o">=</span><span class="s1">&#39;UNKNOWN&#39;</span> <span class="c1"># Default value</span>
+            <span class="p">)</span>
+            <span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span><span class="p">[</span><span class="s1">&#39;missing_person&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_missing_person</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">perform_create</span><span class="p">(</span><span class="n">serializer</span><span class="p">)</span>
+        <span class="n">sighting</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">instance</span>
+
+        <span class="c1"># Process sighting (e.g., facial recognition)</span>
+        <span class="n">sighting_service</span> <span class="o">=</span> <span class="n">SightingService</span><span class="p">()</span>
+        <span class="n">sighting_service</span><span class="o">.</span><span class="n">process_sighting</span><span class="p">(</span><span class="n">sighting</span><span class="p">)</span>
+        
+        <span class="c1"># Find nearby entities</span>
+        <span class="n">notification_service</span> <span class="o">=</span> <span class="n">NotificationService</span><span class="p">()</span>
+        <span class="n">nearby_entities</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">sighting</span><span class="o">.</span><span class="n">latitude</span> <span class="ow">and</span> <span class="n">sighting</span><span class="o">.</span><span class="n">longitude</span><span class="p">:</span>
+            <span class="n">nearby_entities</span> <span class="o">=</span> <span class="n">notification_service</span><span class="o">.</span><span class="n">find_nearby_entities</span><span class="p">(</span>
+                <span class="n">sighting</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span> 
+                <span class="n">sighting</span><span class="o">.</span><span class="n">longitude</span>
+            <span class="p">)</span>
+        <span class="n">notification_service</span><span class="o">.</span><span class="n">notify_entities</span><span class="p">(</span><span class="n">sighting</span><span class="p">,</span> <span class="n">nearby_entities</span><span class="p">)</span>
+        
+        <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_success_headers</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">nearby_entities</span><span class="p">:</span>
+            <span class="n">response_data</span><span class="p">[</span><span class="s1">&#39;nearby_entities&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;ngos&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">]}</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">nearby_entities</span><span class="p">[</span><span class="s1">&#39;ngos&#39;</span><span class="p">]],</span>
+                <span class="s1">&#39;police&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">]}</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">nearby_entities</span><span class="p">[</span><span class="s1">&#39;police&#39;</span><span class="p">]]</span>
+            <span class="p">}</span>
+            
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">response_data</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_201_CREATED</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.perform_create">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.perform_create">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">perform_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serializer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">serializer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.get_client_ip">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.get_client_ip">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_client_ip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">x_forwarded_for</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x_forwarded_for</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x_forwarded_for</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.process_facial_recognition">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.process_facial_recognition">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_facial_recognition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sighting</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Compare sighting photo with missing person&#39;s photo</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DeepFace</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span>
+                <span class="n">sighting</span><span class="o">.</span><span class="n">photo</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">sighting</span><span class="o">.</span><span class="n">missing_person</span><span class="o">.</span><span class="n">recent_photo</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;VGG-Face&#39;</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Update confidence and potentially status</span>
+            <span class="n">sighting</span><span class="o">.</span><span class="n">facial_match_confidence</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distance&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verified&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">sighting</span><span class="o">.</span><span class="n">confidence_level</span> <span class="o">=</span> <span class="s1">&#39;HIGH&#39;</span>
+                <span class="n">sighting</span><span class="o">.</span><span class="n">verification_status</span> <span class="o">=</span> <span class="s1">&#39;VERIFIED&#39;</span>
+                
+                <span class="c1"># Update missing person status if confidence is high</span>
+                <span class="k">if</span> <span class="n">sighting</span><span class="o">.</span><span class="n">facial_match_confidence</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+                    <span class="n">missing_person</span> <span class="o">=</span> <span class="n">sighting</span><span class="o">.</span><span class="n">missing_person</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;FOUND&#39;</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            
+            <span class="n">sighting</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in facial recognition: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.nearby">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.nearby">[docs]</a>
+    <span class="nd">@action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nearby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get sightings near a specific location&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lat</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;latitude&#39;</span><span class="p">))</span>
+            <span class="n">lon</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;longitude&#39;</span><span class="p">))</span>
+            <span class="n">radius</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>  <span class="c1"># km</span>
+            
+            <span class="c1"># Get sightings within radius using Haversine formula</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">latitude__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">longitude__isnull</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            
+            <span class="n">nearby_sightings</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">sighting</span> <span class="ow">in</span> <span class="n">queryset</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_distance</span><span class="p">(</span>
+                        <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">sighting</span><span class="o">.</span><span class="n">latitude</span><span class="p">),</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">sighting</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">distance</span> <span class="o">&lt;=</span> <span class="n">radius</span><span class="p">:</span>
+                        <span class="n">sighting</span><span class="o">.</span><span class="n">distance</span> <span class="o">=</span> <span class="n">distance</span>
+                        <span class="n">nearby_sightings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sighting</span><span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error calculating distance for sighting </span><span class="si">{</span><span class="n">sighting</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+            
+            <span class="c1"># Sort by distance</span>
+            <span class="n">nearby_sightings</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+            
+            <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">nearby_sightings</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="s1">&#39;Invalid coordinates or radius&#39;</span><span class="p">},</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_400_BAD_REQUEST</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.recent">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.recent">[docs]</a>
+    <span class="nd">@action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get recent sightings, optionally filtered by missing person&quot;&quot;&quot;</span>
+        <span class="n">missing_person_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing_person_id&#39;</span><span class="p">)</span>
+        <span class="n">days</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;days&#39;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+        
+        <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">timestamp__gte</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timezone</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">missing_person_id</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">missing_person_id</span><span class="o">=</span><span class="n">missing_person_id</span><span class="p">)</span>
+        
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">queryset</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.verify">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.verify">[docs]</a>
+    <span class="nd">@action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">sighting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">()</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verification_status&#39;</span><span class="p">)</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verification_notes&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Sighting</span><span class="o">.</span><span class="n">VERIFICATION_STATUS</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">({</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="s1">&#39;Invalid status&#39;</span><span class="p">},</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_400_BAD_REQUEST</span><span class="p">)</span>
+
+        <span class="n">sighting</span><span class="o">.</span><span class="n">verification_status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="n">sighting</span><span class="o">.</span><span class="n">verification_notes</span> <span class="o">=</span> <span class="n">notes</span>
+        <span class="n">sighting</span><span class="o">.</span><span class="n">verified_by</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">sighting</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="n">sighting_service</span> <span class="o">=</span> <span class="n">SightingService</span><span class="p">()</span>
+        <span class="n">sighting_service</span><span class="o">.</span><span class="n">update_missing_person_status</span><span class="p">(</span><span class="n">sighting</span><span class="p">)</span>
+        <span class="n">sighting_service</span><span class="o">.</span><span class="n">notify_relevant_parties</span><span class="p">(</span><span class="n">sighting</span><span class="p">)</span>
+
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">sighting</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SightingViewSet.haversine_distance">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.haversine_distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">haversine_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">):</span>
+        <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">radians</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">lat1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">lon1</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">lat2</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">lon2</span><span class="p">)])</span>
+        <span class="n">dlat</span> <span class="o">=</span> <span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span>
+        <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlon</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">asin</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="mi">6371</span>  <span class="c1"># Radius of earth in kilometers</span>
+        <span class="k">return</span> <span class="n">c</span> <span class="o">*</span> <span class="n">r</span>    </div>
+
+    
+<div class="viewcode-block" id="SightingViewSet.analytics">
+<a class="viewcode-back" href="../../sightings.html#sightings.views.SightingViewSet.analytics">[docs]</a>
+    <span class="nd">@action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;get&#39;</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analytics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get analytics for all sightings without restrictions&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use all sightings without filtering by user permissions</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">Sighting</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            
+            <span class="c1"># Get time period from params (optional)</span>
+            <span class="n">days</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;days&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">days</span><span class="p">:</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">timestamp__gte</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">days</span><span class="p">))</span>
+                <span class="p">)</span>
+            
+            <span class="c1"># Get missing person filter (optional)</span>
+            <span class="n">missing_person_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;missing_person_id&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">missing_person_id</span><span class="p">:</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">missing_person_id</span><span class="o">=</span><span class="n">missing_person_id</span><span class="p">)</span>
+
+            <span class="c1"># Compute analytics for all sightings</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total_sightings&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;by_status&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;verification_status&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Add distinct=True</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_confidence&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;confidence_level&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_location_type&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;location_type&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_crowd_density&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;crowd_density&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_companions&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;companions&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;with_photo&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">photo</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;willing_to_contact&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">willing_to_contact</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;time_distribution&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;last_24h&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">timestamp__gte</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;last_week&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">timestamp__gte</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;last_month&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">timestamp__gte</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="p">},</span>
+                <span class="s1">&#39;heatmap_data&#39;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">latitude</span><span class="p">),</span>
+                        <span class="s1">&#39;lng&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">longitude</span><span class="p">),</span>
+                        <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">location</span>  <span class="c1"># Add location name</span>
+                    <span class="p">}</span>
+                    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">latitude__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">longitude__isnull</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+                <span class="s1">&#39;verification_rate&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;verified&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">verification_status</span><span class="o">=</span><span class="s1">&#39;VERIFIED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;pending&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">verification_status</span><span class="o">=</span><span class="s1">&#39;PENDING&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;rejected&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">verification_status</span><span class="o">=</span><span class="s1">&#39;REJECTED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="p">},</span>
+                <span class="s1">&#39;confidence_levels&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">confidence_level</span><span class="o">=</span><span class="s1">&#39;HIGH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;medium&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">confidence_level</span><span class="o">=</span><span class="s1">&#39;MEDIUM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="s1">&#39;low&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">confidence_level</span><span class="o">=</span><span class="s1">&#39;LOW&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="p">},</span>
+                <span class="c1"># Add more detailed statistics</span>
+                <span class="s1">&#39;by_location&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;location&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_reporter&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                    <span class="s1">&#39;reporter__username&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;reporter__first_name&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;reporter__last_name&#39;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;by_missing_person&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+                    <span class="s1">&#39;missing_person__name&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;missing_person__case_number&#39;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="s1">&#39;timeline&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;timestamp__date&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                    <span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;timestamp__date&#39;</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">())</span>  <span class="c1"># Log the full error</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Error generating analytics: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">},</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_500_INTERNAL_SERVER_ERROR</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Reunite</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Sachin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

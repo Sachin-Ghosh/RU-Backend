@@ -1,0 +1,417 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>accounts.migrations package &mdash; Reunite 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Reunite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">accounts.migrations package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-accounts.migrations.0001_initial">accounts.migrations.0001_initial module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0001_initial.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0001_initial.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0001_initial.Migration.initial"><code class="docutils literal notranslate"><span class="pre">Migration.initial</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0001_initial.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more">accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude">accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0004_familygroup_familymember_user_families">accounts.migrations.0004_familygroup_familymember_user_families module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more">accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0006_user_organization_latitude_and_more">accounts.migrations.0006_user_organization_latitude_and_more module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0007_collaboration_collaborationmessage">accounts.migrations.0007_collaboration_collaborationmessage module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0008_user_verification_documents">accounts.migrations.0008_user_verification_documents module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0008_user_verification_documents.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0008_user_verification_documents.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0008_user_verification_documents.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0009_remove_user_verification_documents_and_more">accounts.migrations.0009_remove_user_verification_documents_and_more module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0010_notification">accounts.migrations.0010_notification module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0010_notification.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0010_notification.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0010_notification.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations.0011_alter_notification_target_roles">accounts.migrations.0011_alter_notification_target_roles module</a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0011_alter_notification_target_roles.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#accounts.migrations.0011_alter_notification_target_roles.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#accounts.migrations.0011_alter_notification_target_roles.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-accounts.migrations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Reunite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">accounts.migrations package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/accounts.migrations.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="accounts-migrations-package">
+<h1>accounts.migrations package<a class="headerlink" href="#accounts-migrations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-accounts.migrations.0001_initial">
+<span id="accounts-migrations-0001-initial-module"></span><h2>accounts.migrations.0001_initial module<a class="headerlink" href="#module-accounts.migrations.0001_initial" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0001_initial.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0001_initial.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0001_initial.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0001_initial.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0001_initial.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('auth',</span> <span class="pre">'0012_alter_user_first_name_max_length')]</span></em><a class="headerlink" href="#accounts.migrations.0001_initial.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0001_initial.Migration.initial">
+<span class="sig-name descname"><span class="pre">initial</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#accounts.migrations.0001_initial.Migration.initial" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0001_initial.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;CreateModel</span>&#160; <span class="pre">name='User',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('password',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('last_login',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('is_superuser',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('username',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('first_name',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('last_name',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('email',</span> <span class="pre">&lt;django.db.models.fields.EmailField&gt;),</span> <span class="pre">('is_staff',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('is_active',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('date_joined',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('role',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('phone_number',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('address',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('city',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('state',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('pincode',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('is_verified',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('profile_picture',</span> <span class="pre">&lt;django.db.models.fields.files.ImageField&gt;),</span> <span class="pre">('organization',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('organization_id',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('created_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('updated_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('groups',</span> <span class="pre">&lt;django.db.models.fields.related.ManyToManyField&gt;),</span> <span class="pre">('user_permissions',</span> <span class="pre">&lt;django.db.models.fields.related.ManyToManyField&gt;)],</span> <span class="pre">options={'verbose_name':</span> <span class="pre">'User',</span> <span class="pre">'verbose_name_plural':</span> <span class="pre">'Users'},</span> <span class="pre">managers=[('objects',</span> <span class="pre">&lt;django.contrib.auth.models.UserManager</span> <span class="pre">object&gt;)]&gt;,</span> <span class="pre">&lt;CreateModel</span>&#160; <span class="pre">name='AadhaarProfile',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('aadhaar_id',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('name_in_aadhaar',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('dob',</span> <span class="pre">&lt;django.db.models.fields.DateField&gt;),</span> <span class="pre">('gender',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('address_in_aadhaar',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('fingerprint_hash',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('iris_scan_hash',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('facial_features',</span> <span class="pre">&lt;django.db.models.fields.json.JSONField&gt;),</span> <span class="pre">('last_verified',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('verification_count',</span> <span class="pre">&lt;django.db.models.fields.IntegerField&gt;),</span> <span class="pre">('is_active',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('user',</span> <span class="pre">&lt;django.db.models.fields.related.OneToOneField&gt;)],</span> <span class="pre">options={'verbose_name':</span> <span class="pre">'Aadhaar</span> <span class="pre">Profile',</span> <span class="pre">'verbose_name_plural':</span> <span class="pre">'Aadhaar</span> <span class="pre">Profiles'}&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0001_initial.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more">
+<span id="accounts-migrations-0002-remove-aadhaarprofile-aadhaar-id-and-more-module"></span><h2>accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more module<a class="headerlink" href="#module-accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0002_remove_aadhaarprofile_aadhaar_id_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0001_initial')]</span></em><a class="headerlink" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;RemoveField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='aadhaar_id'&gt;,</span> <span class="pre">&lt;RemoveField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='facial_features'&gt;,</span> <span class="pre">&lt;RemoveField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='iris_scan_hash'&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='aadhaar_number_hash',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='blockchain_reference',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='document_hash',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='facial_signature',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='middle_name',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='aadhaarprofile',</span> <span class="pre">name='fingerprint_hash',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='first_name',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='last_name',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0002_remove_aadhaarprofile_aadhaar_id_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude">
+<span id="accounts-migrations-0003-user-dob-user-gender-user-latitude-user-longitude-module"></span><h2>accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude module<a class="headerlink" href="#module-accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0003_user_dob_user_gender_user_latitude_user_longitude.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0002_remove_aadhaarprofile_aadhaar_id_and_more')]</span></em><a class="headerlink" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='dob',</span> <span class="pre">field=&lt;django.db.models.fields.DateField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='gender',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='latitude',</span> <span class="pre">field=&lt;django.db.models.fields.DecimalField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='longitude',</span> <span class="pre">field=&lt;django.db.models.fields.DecimalField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0003_user_dob_user_gender_user_latitude_user_longitude.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0004_familygroup_familymember_user_families">
+<span id="accounts-migrations-0004-familygroup-familymember-user-families-module"></span><h2>accounts.migrations.0004_familygroup_familymember_user_families module<a class="headerlink" href="#module-accounts.migrations.0004_familygroup_familymember_user_families" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0004_familygroup_familymember_user_families.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0004_familygroup_familymember_user_families.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0004_familygroup_familymember_user_families.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0004_familygroup_familymember_user_families.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0003_user_dob_user_gender_user_latitude_user_longitude')]</span></em><a class="headerlink" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0004_familygroup_familymember_user_families.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;CreateModel</span>&#160; <span class="pre">name='FamilyGroup',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('name',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('passkey',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('created_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('created_by',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)]&gt;,</span> <span class="pre">&lt;CreateModel</span>&#160; <span class="pre">name='FamilyMember',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('role',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('relationship',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('joined_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('family',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('user',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)],</span> <span class="pre">options={'unique_together':</span> <span class="pre">{('user',</span> <span class="pre">'family')}}&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='families',</span> <span class="pre">field=&lt;django.db.models.fields.related.ManyToManyField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0004_familygroup_familymember_user_families.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more">
+<span id="accounts-migrations-0005-user-is-approved-user-notification-preferences-and-more-module"></span><h2>accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more module<a class="headerlink" href="#module-accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0005_user_is_approved_user_notification_preferences_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0004_familygroup_familymember_user_families')]</span></em><a class="headerlink" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='is_approved',</span> <span class="pre">field=&lt;django.db.models.fields.BooleanField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='notification_preferences',</span> <span class="pre">field=&lt;django.db.models.fields.json.JSONField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='preferred_language',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0005_user_is_approved_user_notification_preferences_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0006_user_organization_latitude_and_more">
+<span id="accounts-migrations-0006-user-organization-latitude-and-more-module"></span><h2>accounts.migrations.0006_user_organization_latitude_and_more module<a class="headerlink" href="#module-accounts.migrations.0006_user_organization_latitude_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0006_user_organization_latitude_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0006_user_organization_latitude_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0006_user_organization_latitude_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0006_user_organization_latitude_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0005_user_is_approved_user_notification_preferences_and_more')]</span></em><a class="headerlink" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0006_user_organization_latitude_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='organization_latitude',</span> <span class="pre">field=&lt;django.db.models.fields.DecimalField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='organization_location',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='organization_longitude',</span> <span class="pre">field=&lt;django.db.models.fields.DecimalField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0006_user_organization_latitude_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0007_collaboration_collaborationmessage">
+<span id="accounts-migrations-0007-collaboration-collaborationmessage-module"></span><h2>accounts.migrations.0007_collaboration_collaborationmessage module<a class="headerlink" href="#module-accounts.migrations.0007_collaboration_collaborationmessage" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0007_collaboration_collaborationmessage.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0007_collaboration_collaborationmessage.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0007_collaboration_collaborationmessage.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0007_collaboration_collaborationmessage.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0006_user_organization_latitude_and_more'),</span> <span class="pre">('missing_persons',</span> <span class="pre">'0009_missingperson_assigned_ngo_and_more')]</span></em><a class="headerlink" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0007_collaboration_collaborationmessage.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;CreateModel</span>&#160; <span class="pre">name='Collaboration',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('status',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('created_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('updated_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('notes',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('collaborator',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('initiator',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('missing_person',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)],</span> <span class="pre">options={'unique_together':</span> <span class="pre">{('initiator',</span> <span class="pre">'collaborator',</span> <span class="pre">'missing_person')}}&gt;,</span> <span class="pre">&lt;CreateModel</span>&#160; <span class="pre">name='CollaborationMessage',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('message',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('file_attachment',</span> <span class="pre">&lt;django.db.models.fields.files.FileField&gt;),</span> <span class="pre">('sent_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('collaboration',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('sender',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)]&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0007_collaboration_collaborationmessage.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0008_user_verification_documents">
+<span id="accounts-migrations-0008-user-verification-documents-module"></span><h2>accounts.migrations.0008_user_verification_documents module<a class="headerlink" href="#module-accounts.migrations.0008_user_verification_documents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0008_user_verification_documents.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0008_user_verification_documents.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0008_user_verification_documents.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0008_user_verification_documents.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0008_user_verification_documents.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0007_collaboration_collaborationmessage')]</span></em><a class="headerlink" href="#accounts.migrations.0008_user_verification_documents.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0008_user_verification_documents.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='verification_documents',</span> <span class="pre">field=&lt;django.db.models.fields.files.FileField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0008_user_verification_documents.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0009_remove_user_verification_documents_and_more">
+<span id="accounts-migrations-0009-remove-user-verification-documents-and-more-module"></span><h2>accounts.migrations.0009_remove_user_verification_documents_and_more module<a class="headerlink" href="#module-accounts.migrations.0009_remove_user_verification_documents_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0009_remove_user_verification_documents_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0009_remove_user_verification_documents_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0009_remove_user_verification_documents_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0008_user_verification_documents')]</span></em><a class="headerlink" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;RemoveField</span>&#160; <span class="pre">model_name='user',</span> <span class="pre">name='verification_documents'&gt;,</span> <span class="pre">&lt;CreateModel</span>&#160; <span class="pre">name='VerificationDocument',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('document',</span> <span class="pre">&lt;django.db.models.fields.files.FileField&gt;),</span> <span class="pre">('document_type',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('description',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('uploaded_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('is_verified',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('verified_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('user',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('verified_by',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)],</span> <span class="pre">options={'ordering':</span> <span class="pre">['-uploaded_at']}&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0009_remove_user_verification_documents_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0010_notification">
+<span id="accounts-migrations-0010-notification-module"></span><h2>accounts.migrations.0010_notification module<a class="headerlink" href="#module-accounts.migrations.0010_notification" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0010_notification.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0010_notification.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0010_notification.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0010_notification.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0010_notification.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0009_remove_user_verification_documents_and_more')]</span></em><a class="headerlink" href="#accounts.migrations.0010_notification.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0010_notification.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;CreateModel</span>&#160; <span class="pre">name='Notification',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('title',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('message',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('priority',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('created_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('expires_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('is_active',</span> <span class="pre">&lt;django.db.models.fields.BooleanField&gt;),</span> <span class="pre">('target_roles',</span> <span class="pre">&lt;django.db.models.fields.json.JSONField&gt;),</span> <span class="pre">('created_by',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)],</span> <span class="pre">options={'ordering':</span> <span class="pre">['-created_at']}&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0010_notification.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations.0011_alter_notification_target_roles">
+<span id="accounts-migrations-0011-alter-notification-target-roles-module"></span><h2>accounts.migrations.0011_alter_notification_target_roles module<a class="headerlink" href="#module-accounts.migrations.0011_alter_notification_target_roles" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="accounts.migrations.0011_alter_notification_target_roles.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">accounts.migrations.0011_alter_notification_target_roles.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/accounts/migrations/0011_alter_notification_target_roles.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#accounts.migrations.0011_alter_notification_target_roles.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0011_alter_notification_target_roles.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('accounts',</span> <span class="pre">'0010_notification')]</span></em><a class="headerlink" href="#accounts.migrations.0011_alter_notification_target_roles.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="accounts.migrations.0011_alter_notification_target_roles.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AlterField</span>&#160; <span class="pre">model_name='notification',</span> <span class="pre">name='target_roles',</span> <span class="pre">field=&lt;django.db.models.fields.json.JSONField&gt;&gt;]</span></em><a class="headerlink" href="#accounts.migrations.0011_alter_notification_target_roles.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-accounts.migrations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-accounts.migrations" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sachin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

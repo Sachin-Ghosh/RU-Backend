@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>accounts.services &#8212; Reunite 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for accounts.services</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.files.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_storage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">accounts.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AadhaarProfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">authentication.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">BiometricHashingService</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blockchain.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlockchainService</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_mail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">authentication.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OTPVerification</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">accounts.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FamilyGroup</span><span class="p">,</span> <span class="n">FamilyMember</span><span class="p">,</span> <span class="n">VerificationDocument</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>  <span class="c1"># Get the correct User model</span>
+
+<div class="viewcode-block" id="OTPService">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.OTPService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OTPService</span><span class="p">:</span>
+<div class="viewcode-block" id="OTPService.generate_otp">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.OTPService.generate_otp">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_otp</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">6</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="OTPService.send_otp">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.OTPService.send_otp">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_otp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phone_or_email</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">otp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_otp</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating OTP for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">otp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Get user instance</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">phone_or_email</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">User</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User not found for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="s1">&#39;@&#39;</span> <span class="ow">in</span> <span class="n">phone_or_email</span><span class="p">:</span>  <span class="c1"># Email OTP</span>
+                <span class="n">subject</span> <span class="o">=</span> <span class="s1">&#39;Email Verification - Your OTP&#39;</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                Thank you for registering with our platform.</span>
+<span class="s1">                Your OTP for email verification is: </span><span class="si">{</span><span class="n">otp</span><span class="si">}</span>
+<span class="s1">                </span>
+<span class="s1">                This OTP is valid for 10 minutes.</span>
+<span class="s1">                </span>
+<span class="s1">                If you didn&#39;t request this, please ignore this email.</span>
+<span class="s1">                &#39;&#39;&#39;</span>
+                
+                <span class="c1"># Send email</span>
+                <span class="n">email_sent</span> <span class="o">=</span> <span class="n">send_mail</span><span class="p">(</span>
+                    <span class="n">subject</span><span class="p">,</span>
+                    <span class="n">message</span><span class="p">,</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">DEFAULT_FROM_EMAIL</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">phone_or_email</span><span class="p">],</span>
+                    <span class="n">fail_silently</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">email_sent</span><span class="p">:</span>
+                    <span class="c1"># Create OTP verification record</span>
+                    <span class="n">expires_at</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+                    <span class="n">OTPVerification</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                        <span class="n">otp</span><span class="o">=</span><span class="n">otp</span><span class="p">,</span>
+                        <span class="n">purpose</span><span class="o">=</span><span class="s1">&#39;EMAIL_VERIFICATION&#39;</span><span class="p">,</span>
+                        <span class="n">expires_at</span><span class="o">=</span><span class="n">expires_at</span>
+                    <span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OTP stored in database for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                    
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in send_otp: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="OTPService.verify_otp">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.OTPService.verify_otp">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_otp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phone_or_email</span><span class="p">,</span> <span class="n">otp</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Verifying OTP for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">. Provided: </span><span class="si">{</span><span class="n">otp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Get user and check OTP</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">phone_or_email</span><span class="p">)</span>
+                <span class="n">otp_record</span> <span class="o">=</span> <span class="n">OTPVerification</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                    <span class="n">otp</span><span class="o">=</span><span class="n">otp</span><span class="p">,</span>
+                    <span class="n">is_used</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">expires_at__gt</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+                    <span class="n">purpose</span><span class="o">=</span><span class="s1">&#39;EMAIL_VERIFICATION&#39;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">otp_record</span><span class="p">:</span>
+                    <span class="c1"># Mark OTP as used</span>
+                    <span class="n">otp_record</span><span class="o">.</span><span class="n">is_used</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">otp_record</span><span class="o">.</span><span class="n">verified_at</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+                    <span class="n">otp_record</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                    <span class="c1"># Update user verification status</span>
+                    <span class="n">user</span><span class="o">.</span><span class="n">is_verified</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                    
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OTP verified successfully for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid or expired OTP for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">except</span> <span class="n">User</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User not found for </span><span class="si">{</span><span class="n">phone_or_email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+                
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in verify_otp: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+<div class="viewcode-block" id="RegistrationService">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.RegistrationService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrationService</span><span class="p">:</span>
+<div class="viewcode-block" id="RegistrationService.validate_user_data">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.RegistrationService.validate_user_data">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_user_data</span><span class="p">(</span><span class="n">user_data</span><span class="p">,</span> <span class="n">aadhaar_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate user provided data against Aadhaar data&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Convert names to lowercase and split into parts</span>
+            <span class="n">user_name_parts</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_data</span><span class="p">[</span><span class="s1">&#39;first_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">user_data</span><span class="p">[</span><span class="s1">&#39;last_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">aadhaar_name_parts</span> <span class="o">=</span> <span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            
+            <span class="c1"># Extract first and last name from both</span>
+            <span class="n">user_first_name</span> <span class="o">=</span> <span class="n">user_name_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">user_last_name</span> <span class="o">=</span> <span class="n">user_name_parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">aadhaar_first_name</span> <span class="o">=</span> <span class="n">aadhaar_name_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">aadhaar_last_name</span> <span class="o">=</span> <span class="n">aadhaar_name_parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            
+            <span class="c1"># Check if first and last names match</span>
+            <span class="k">if</span> <span class="n">user_first_name</span> <span class="o">==</span> <span class="n">aadhaar_first_name</span> <span class="ow">and</span> <span class="n">user_last_name</span> <span class="o">==</span> <span class="n">aadhaar_last_name</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+                
+            <span class="c1"># Check if user&#39;s name parts are contained in Aadhaar name</span>
+            <span class="n">user_name_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">user_name_parts</span><span class="p">)</span>
+            <span class="n">aadhaar_name_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">aadhaar_name_parts</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">user_name_set</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">aadhaar_name_set</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+                
+            <span class="c1"># Check if at least first name and last name partially match</span>
+            <span class="n">first_name_match</span> <span class="o">=</span> <span class="n">user_first_name</span> <span class="ow">in</span> <span class="n">aadhaar_first_name</span> <span class="ow">or</span> <span class="n">aadhaar_first_name</span> <span class="ow">in</span> <span class="n">user_first_name</span>
+            <span class="n">last_name_match</span> <span class="o">=</span> <span class="n">user_last_name</span> <span class="ow">in</span> <span class="n">aadhaar_last_name</span> <span class="ow">or</span> <span class="n">aadhaar_last_name</span> <span class="ow">in</span> <span class="n">user_last_name</span>
+            <span class="k">if</span> <span class="n">first_name_match</span> <span class="ow">and</span> <span class="n">last_name_match</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            
+            <span class="c1"># If none of the above conditions match, raise error</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Name mismatch: User provided &#39;</span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_name_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but Aadhaar shows &#39;</span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aadhaar_name_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="s2">&quot;Please provide name exactly as in Aadhaar card.&quot;</span>
+            <span class="p">)</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in name validation: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RegistrationService.process_registration">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.RegistrationService.process_registration">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_registration</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">aadhaar_image</span><span class="p">,</span> <span class="n">profile_picture</span><span class="p">,</span> <span class="n">fingerprint</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process user registration with biometric data&quot;&quot;&quot;</span>
+        <span class="n">temp_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">temp_file_handles</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">biometric_service</span> <span class="o">=</span> <span class="n">BiometricHashingService</span><span class="p">()</span>
+            
+            <span class="c1"># Save files temporarily</span>
+            <span class="n">temp_aadhaar</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.jpg&#39;</span><span class="p">)</span>
+            <span class="n">temp_profile_picture</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.jpg&#39;</span><span class="p">)</span>
+            <span class="n">temp_file_handles</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">temp_aadhaar</span><span class="p">,</span> <span class="n">temp_profile_picture</span><span class="p">])</span>
+            <span class="n">temp_files</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">temp_aadhaar</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">temp_profile_picture</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+            
+            <span class="c1"># Save uploaded files</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">aadhaar_image</span><span class="o">.</span><span class="n">chunks</span><span class="p">():</span>
+                <span class="n">temp_aadhaar</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+            <span class="n">temp_aadhaar</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">profile_picture</span><span class="o">.</span><span class="n">chunks</span><span class="p">():</span>
+                <span class="n">temp_profile_picture</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+            <span class="n">temp_profile_picture</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            
+            <span class="c1"># Close file handles</span>
+            <span class="k">for</span> <span class="n">handle</span> <span class="ow">in</span> <span class="n">temp_file_handles</span><span class="p">:</span>
+                <span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            
+            <span class="c1"># Extract and validate Aadhaar data</span>
+            <span class="n">aadhaar_data</span> <span class="o">=</span> <span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_aadhaar_data</span><span class="p">(</span><span class="n">temp_aadhaar</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            
+            <span class="c1"># Print debug information</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Validating names:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User provided: </span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aadhaar shows: </span><span class="si">{</span><span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Validate user data against Aadhaar data</span>
+            <span class="n">user_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;first_name&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span>
+                <span class="s1">&#39;last_name&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">RegistrationService</span><span class="o">.</span><span class="n">validate_user_data</span><span class="p">(</span><span class="n">user_data</span><span class="p">,</span> <span class="n">aadhaar_data</span><span class="p">)</span>
+            
+            <span class="c1"># Create facial signature</span>
+            <span class="n">facial_sig</span> <span class="o">=</span> <span class="n">biometric_service</span><span class="o">.</span><span class="n">create_facial_signature</span><span class="p">(</span><span class="n">temp_profile_picture</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">facial_sig</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Could not create facial signature&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Process fingerprint if provided</span>
+            <span class="n">fingerprint_hash</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">fingerprint</span><span class="p">:</span>
+                <span class="n">temp_fingerprint</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.jpg&#39;</span><span class="p">)</span>
+                <span class="n">temp_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_fingerprint</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">fingerprint</span><span class="o">.</span><span class="n">chunks</span><span class="p">():</span>
+                    <span class="n">temp_fingerprint</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="n">temp_fingerprint</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">temp_fingerprint</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">fingerprint_hash</span> <span class="o">=</span> <span class="n">biometric_service</span><span class="o">.</span><span class="n">hash_fingerprint</span><span class="p">(</span><span class="n">temp_fingerprint</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            
+            <span class="c1"># Create blockchain record with current timestamp</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">blockchain_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;user_id&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s1">&#39;aadhaar_hash&#39;</span><span class="p">:</span> <span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;document_hash&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;facial_signature&#39;</span><span class="p">:</span> <span class="n">facial_sig</span><span class="p">,</span>
+                <span class="s1">&#39;fingerprint_hash&#39;</span><span class="p">:</span> <span class="n">fingerprint_hash</span><span class="p">,</span>
+                <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">current_time</span>
+            <span class="p">}</span>
+            
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="n">BlockchainService</span><span class="o">.</span><span class="n">add_block</span><span class="p">(</span><span class="n">blockchain_data</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="s1">&#39;registration&#39;</span><span class="p">)</span>
+                <span class="n">blockchain_reference</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">hash</span> <span class="k">if</span> <span class="n">block</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Blockchain error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">blockchain_reference</span> <span class="o">=</span> <span class="kc">None</span>
+            
+            <span class="c1"># Create AadhaarProfile</span>
+            <span class="n">aadhaar_profile</span> <span class="o">=</span> <span class="n">AadhaarProfile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                <span class="n">aadhaar_number_hash</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                    <span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;aadhaar_number&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+                <span class="n">name_in_aadhaar</span><span class="o">=</span><span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                <span class="n">dob</span><span class="o">=</span><span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;dob&#39;</span><span class="p">],</span>
+                <span class="n">gender</span><span class="o">=</span><span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;gender&#39;</span><span class="p">],</span>
+                <span class="n">document_hash</span><span class="o">=</span><span class="n">aadhaar_data</span><span class="p">[</span><span class="s1">&#39;document_hash&#39;</span><span class="p">],</span>
+                <span class="n">facial_signature</span><span class="o">=</span><span class="n">facial_sig</span><span class="p">,</span>
+                <span class="n">fingerprint_hash</span><span class="o">=</span><span class="n">fingerprint_hash</span><span class="p">,</span>
+                <span class="n">blockchain_reference</span><span class="o">=</span><span class="n">blockchain_reference</span>
+            <span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">aadhaar_profile</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in registration process: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+            
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Clean up temporary files</span>
+            <span class="k">for</span> <span class="n">temp_file</span> <span class="ow">in</span> <span class="n">temp_files</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_file</span><span class="p">):</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">temp_file</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error deleting temporary file </span><span class="si">{</span><span class="n">temp_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="UserAnalyticsService">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.UserAnalyticsService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserAnalyticsService</span><span class="p">:</span>
+<div class="viewcode-block" id="UserAnalyticsService.get_user_statistics">
+<a class="viewcode-back" href="../../accounts.html#accounts.services.UserAnalyticsService.get_user_statistics">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_user_statistics</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get comprehensive user statistics&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Basic user counts</span>
+            <span class="n">total_users</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total users: </span><span class="si">{</span><span class="n">total_users</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Add logging</span>
+            
+            <span class="c1"># Role distribution</span>
+            <span class="n">role_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;citizen&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s1">&#39;CITIZEN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;ngo&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s1">&#39;NGO&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;law_enforcement&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s1">&#39;LAW_ENFORCEMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;admin&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s1">&#39;ADMIN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Role stats: </span><span class="si">{</span><span class="n">role_stats</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Add logging</span>
+            
+            <span class="c1"># Verification status</span>
+            <span class="n">verification_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;verified&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_verified</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;unverified&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_verified</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Organization stats</span>
+            <span class="n">org_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">role__in</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;NGO&#39;</span><span class="p">,</span> <span class="s1">&#39;LAW_ENFORCEMENT&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;approved&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">role__in</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;NGO&#39;</span><span class="p">,</span> <span class="s1">&#39;LAW_ENFORCEMENT&#39;</span><span class="p">],</span>
+                    <span class="n">is_approved</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;pending&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">role__in</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;NGO&#39;</span><span class="p">,</span> <span class="s1">&#39;LAW_ENFORCEMENT&#39;</span><span class="p">],</span>
+                    <span class="n">is_approved</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Active/Inactive stats</span>
+            <span class="n">active_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;inactive&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Document verification stats</span>
+            <span class="n">doc_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">VerificationDocument</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;verified&#39;</span><span class="p">:</span> <span class="n">VerificationDocument</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_verified</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;pending&#39;</span><span class="p">:</span> <span class="n">VerificationDocument</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_verified</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Aadhaar verification stats</span>
+            <span class="n">aadhaar_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">AadhaarProfile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="n">AadhaarProfile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Family stats</span>
+            <span class="n">family_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total_groups&#39;</span><span class="p">:</span> <span class="n">FamilyGroup</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;total_members&#39;</span><span class="p">:</span> <span class="n">FamilyMember</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Recent registrations (last 30 days)</span>
+            <span class="n">thirty_days_ago</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+            <span class="n">recent_stats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">date_joined__gte</span><span class="o">=</span><span class="n">thirty_days_ago</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+                <span class="s1">&#39;verified&#39;</span><span class="p">:</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">date_joined__gte</span><span class="o">=</span><span class="n">thirty_days_ago</span><span class="p">,</span>
+                    <span class="n">is_verified</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="n">statistics</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;total_users&#39;</span><span class="p">:</span> <span class="n">total_users</span><span class="p">,</span>
+                <span class="s1">&#39;roles&#39;</span><span class="p">:</span> <span class="n">role_stats</span><span class="p">,</span>
+                <span class="s1">&#39;verification&#39;</span><span class="p">:</span> <span class="n">verification_stats</span><span class="p">,</span>
+                <span class="s1">&#39;organizations&#39;</span><span class="p">:</span> <span class="n">org_stats</span><span class="p">,</span>
+                <span class="s1">&#39;activity&#39;</span><span class="p">:</span> <span class="n">active_stats</span><span class="p">,</span>
+                <span class="s1">&#39;documents&#39;</span><span class="p">:</span> <span class="n">doc_stats</span><span class="p">,</span>
+                <span class="s1">&#39;aadhaar&#39;</span><span class="p">:</span> <span class="n">aadhaar_stats</span><span class="p">,</span>
+                <span class="s1">&#39;families&#39;</span><span class="p">:</span> <span class="n">family_stats</span><span class="p">,</span>
+                <span class="s1">&#39;recent_registrations&#39;</span><span class="p">:</span> <span class="n">recent_stats</span>
+            <span class="p">}</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generated statistics successfully&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">statistics</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in get_user_statistics: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Full traceback:&quot;</span><span class="p">)</span>  <span class="c1"># This will log the full traceback</span>
+            <span class="k">return</span> <span class="kc">None</span> </div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Reunite</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Sachin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

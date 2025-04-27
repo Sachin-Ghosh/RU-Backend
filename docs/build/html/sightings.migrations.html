@@ -1,0 +1,309 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sightings.migrations package &mdash; Reunite 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Reunite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">sightings.migrations package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-sightings.migrations.0001_initial">sightings.migrations.0001_initial module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0001_initial.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0001_initial.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0001_initial.Migration.initial"><code class="docutils literal notranslate"><span class="pre">Migration.initial</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0001_initial.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0002_sighting_is_notified">sightings.migrations.0002_sighting_is_notified module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0002_sighting_is_notified.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0002_sighting_is_notified.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0002_sighting_is_notified.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more">sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0004_sighting_companions_and_more">sightings.migrations.0004_sighting_companions_and_more module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0004_sighting_companions_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0004_sighting_companions_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0004_sighting_companions_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0005_alter_sighting_missing_person">sightings.migrations.0005_alter_sighting_missing_person module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0006_alter_sighting_crowd_density_and_more">sightings.migrations.0006_alter_sighting_crowd_density_and_more module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations.0007_alter_sighting_confidence_level_numeric">sightings.migrations.0007_alter_sighting_confidence_level_numeric module</a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li><a class="reference internal" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li><a class="reference internal" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sightings.migrations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Reunite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sightings.migrations package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/sightings.migrations.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sightings-migrations-package">
+<h1>sightings.migrations package<a class="headerlink" href="#sightings-migrations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sightings.migrations.0001_initial">
+<span id="sightings-migrations-0001-initial-module"></span><h2>sightings.migrations.0001_initial module<a class="headerlink" href="#module-sightings.migrations.0001_initial" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0001_initial.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0001_initial.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0001_initial.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0001_initial.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0001_initial.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('missing_persons',</span> <span class="pre">'0001_initial'),</span> <span class="pre">('accounts',</span> <span class="pre">'__first__')]</span></em><a class="headerlink" href="#sightings.migrations.0001_initial.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0001_initial.Migration.initial">
+<span class="sig-name descname"><span class="pre">initial</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sightings.migrations.0001_initial.Migration.initial" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0001_initial.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;CreateModel</span>&#160; <span class="pre">name='Sighting',</span> <span class="pre">fields=[('id',</span> <span class="pre">&lt;django.db.models.fields.BigAutoField&gt;),</span> <span class="pre">('location',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('latitude',</span> <span class="pre">&lt;django.db.models.fields.DecimalField&gt;),</span> <span class="pre">('longitude',</span> <span class="pre">&lt;django.db.models.fields.DecimalField&gt;),</span> <span class="pre">('location_details',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('timestamp',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('description',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('wearing',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('accompanied_by',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('direction_headed',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('photo',</span> <span class="pre">&lt;django.db.models.fields.files.ImageField&gt;),</span> <span class="pre">('additional_photos',</span> <span class="pre">&lt;django.db.models.fields.json.JSONField&gt;),</span> <span class="pre">('video',</span> <span class="pre">&lt;django.db.models.fields.files.FileField&gt;),</span> <span class="pre">('verification_status',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('verification_notes',</span> <span class="pre">&lt;django.db.models.fields.TextField&gt;),</span> <span class="pre">('confidence_level',</span> <span class="pre">&lt;django.db.models.fields.CharField&gt;),</span> <span class="pre">('facial_match_confidence',</span> <span class="pre">&lt;django.db.models.fields.FloatField&gt;),</span> <span class="pre">('ml_analysis_results',</span> <span class="pre">&lt;django.db.models.fields.json.JSONField&gt;),</span> <span class="pre">('created_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('updated_at',</span> <span class="pre">&lt;django.db.models.fields.DateTimeField&gt;),</span> <span class="pre">('ip_address',</span> <span class="pre">&lt;django.db.models.fields.GenericIPAddressField&gt;),</span> <span class="pre">('device_info',</span> <span class="pre">&lt;django.db.models.fields.json.JSONField&gt;),</span> <span class="pre">('missing_person',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('reporter',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;),</span> <span class="pre">('verified_by',</span> <span class="pre">&lt;django.db.models.fields.related.ForeignKey&gt;)],</span> <span class="pre">options={'verbose_name':</span> <span class="pre">'Sighting',</span> <span class="pre">'verbose_name_plural':</span> <span class="pre">'Sightings',</span> <span class="pre">'ordering':</span> <span class="pre">['-timestamp']}&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0001_initial.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0002_sighting_is_notified">
+<span id="sightings-migrations-0002-sighting-is-notified-module"></span><h2>sightings.migrations.0002_sighting_is_notified module<a class="headerlink" href="#module-sightings.migrations.0002_sighting_is_notified" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0002_sighting_is_notified.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0002_sighting_is_notified.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0002_sighting_is_notified.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0002_sighting_is_notified.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0002_sighting_is_notified.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('sightings',</span> <span class="pre">'0001_initial')]</span></em><a class="headerlink" href="#sightings.migrations.0002_sighting_is_notified.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0002_sighting_is_notified.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='is_notified',</span> <span class="pre">field=&lt;django.db.models.fields.BooleanField&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0002_sighting_is_notified.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more">
+<span id="sightings-migrations-0003-sighting-reporter-contact-sighting-reporter-name-and-more-module"></span><h2>sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more module<a class="headerlink" href="#module-sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0003_sighting_reporter_contact_sighting_reporter_name_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('sightings',</span> <span class="pre">'0002_sighting_is_notified'),</span> <span class="pre">('accounts',</span> <span class="pre">'__first__')]</span></em><a class="headerlink" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='reporter_contact',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='reporter_name',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='reporter',</span> <span class="pre">field=&lt;django.db.models.fields.related.ForeignKey&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0003_sighting_reporter_contact_sighting_reporter_name_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0004_sighting_companions_and_more">
+<span id="sightings-migrations-0004-sighting-companions-and-more-module"></span><h2>sightings.migrations.0004_sighting_companions_and_more module<a class="headerlink" href="#module-sightings.migrations.0004_sighting_companions_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0004_sighting_companions_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0004_sighting_companions_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0004_sighting_companions_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0004_sighting_companions_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0004_sighting_companions_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('sightings',</span> <span class="pre">'0003_sighting_reporter_contact_sighting_reporter_name_and_more')]</span></em><a class="headerlink" href="#sightings.migrations.0004_sighting_companions_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0004_sighting_companions_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='companions',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='confidence_level_numeric',</span> <span class="pre">field=&lt;django.db.models.fields.FloatField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='crowd_density',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='location_type',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='observed_behavior',</span> <span class="pre">field=&lt;django.db.models.fields.TextField&gt;&gt;,</span> <span class="pre">&lt;AddField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='willing_to_contact',</span> <span class="pre">field=&lt;django.db.models.fields.BooleanField&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0004_sighting_companions_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0005_alter_sighting_missing_person">
+<span id="sightings-migrations-0005-alter-sighting-missing-person-module"></span><h2>sightings.migrations.0005_alter_sighting_missing_person module<a class="headerlink" href="#module-sightings.migrations.0005_alter_sighting_missing_person" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0005_alter_sighting_missing_person.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0005_alter_sighting_missing_person.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0005_alter_sighting_missing_person.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0005_alter_sighting_missing_person.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('missing_persons',</span> <span class="pre">'0009_missingperson_assigned_ngo_and_more'),</span> <span class="pre">('sightings',</span> <span class="pre">'0004_sighting_companions_and_more')]</span></em><a class="headerlink" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0005_alter_sighting_missing_person.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='missing_person',</span> <span class="pre">field=&lt;django.db.models.fields.related.ForeignKey&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0005_alter_sighting_missing_person.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0006_alter_sighting_crowd_density_and_more">
+<span id="sightings-migrations-0006-alter-sighting-crowd-density-and-more-module"></span><h2>sightings.migrations.0006_alter_sighting_crowd_density_and_more module<a class="headerlink" href="#module-sightings.migrations.0006_alter_sighting_crowd_density_and_more" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0006_alter_sighting_crowd_density_and_more.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0006_alter_sighting_crowd_density_and_more.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('missing_persons',</span> <span class="pre">'0009_missingperson_assigned_ngo_and_more'),</span> <span class="pre">('sightings',</span> <span class="pre">'0005_alter_sighting_missing_person')]</span></em><a class="headerlink" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='crowd_density',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='location_type',</span> <span class="pre">field=&lt;django.db.models.fields.CharField&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='missing_person',</span> <span class="pre">field=&lt;django.db.models.fields.related.ForeignKey&gt;&gt;,</span> <span class="pre">&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='willing_to_contact',</span> <span class="pre">field=&lt;django.db.models.fields.BooleanField&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0006_alter_sighting_crowd_density_and_more.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations.0007_alter_sighting_confidence_level_numeric">
+<span id="sightings-migrations-0007-alter-sighting-confidence-level-numeric-module"></span><h2>sightings.migrations.0007_alter_sighting_confidence_level_numeric module<a class="headerlink" href="#module-sightings.migrations.0007_alter_sighting_confidence_level_numeric" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sightings.migrations.0007_alter_sighting_confidence_level_numeric.</span></span><span class="sig-name descname"><span class="pre">Migration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sightings/migrations/0007_alter_sighting_confidence_level_numeric.html#Migration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Migration</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.dependencies">
+<span class="sig-name descname"><span class="pre">dependencies</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('sightings',</span> <span class="pre">'0006_alter_sighting_crowd_density_and_more')]</span></em><a class="headerlink" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.dependencies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.operations">
+<span class="sig-name descname"><span class="pre">operations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;AlterField</span>&#160; <span class="pre">model_name='sighting',</span> <span class="pre">name='confidence_level_numeric',</span> <span class="pre">field=&lt;django.db.models.fields.FloatField&gt;&gt;]</span></em><a class="headerlink" href="#sightings.migrations.0007_alter_sighting_confidence_level_numeric.Migration.operations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sightings.migrations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sightings.migrations" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sachin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

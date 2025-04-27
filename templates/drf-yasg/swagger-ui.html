@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+    {% block extra_head %}
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="//unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+    {% endblock %}
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="//unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+    <script src="//unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
+    <script>
+    window.onload = function() {
+        const ui = SwaggerUIBundle({
+            url: "{% url 'openapi-schema' %}",
+            dom_id: '#swagger-ui',
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ],
+            layout: "BaseLayout",
+            deepLinking: true,
+            showExtensions: true,
+            showCommonExtensions: true,
+            requestInterceptor: (request) => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    request.headers['Authorization'] = 'Bearer ' + token;
+                }
+                return request;
+            }
+        });
+        window.ui = ui;
+    };
+    </script>
+</body>
+</html> 

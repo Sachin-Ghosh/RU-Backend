@@ -1,0 +1,1055 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>authentication package &mdash; Reunite 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Reunite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">authentication package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-authentication.admin">authentication.admin module</a><ul>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin.list_display"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin.list_display</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin.list_filter"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin.list_filter</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin.media"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin.media</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin.readonly_fields"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin.readonly_fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.AuthenticationLogAdmin.search_fields"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogAdmin.search_fields</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin.list_display"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin.list_display</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin.list_filter"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin.list_filter</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin.media"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin.media</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin.readonly_fields"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin.readonly_fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.BiometricAuthAdmin.search_fields"><code class="docutils literal notranslate"><span class="pre">BiometricAuthAdmin.search_fields</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin.list_display"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin.list_display</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin.list_filter"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin.list_filter</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin.media"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin.media</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin.readonly_fields"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin.readonly_fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.admin.OTPVerificationAdmin.search_fields"><code class="docutils literal notranslate"><span class="pre">OTPVerificationAdmin.search_fields</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication.apps">authentication.apps module</a><ul>
+<li><a class="reference internal" href="#authentication.apps.AuthenticationConfig"><code class="docutils literal notranslate"><span class="pre">AuthenticationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.apps.AuthenticationConfig.default_auto_field"><code class="docutils literal notranslate"><span class="pre">AuthenticationConfig.default_auto_field</span></code></a></li>
+<li><a class="reference internal" href="#authentication.apps.AuthenticationConfig.name"><code class="docutils literal notranslate"><span class="pre">AuthenticationConfig.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication.models">authentication.models module</a><ul>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.DoesNotExist</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.MultipleObjectsReturned</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.action"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.action</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.device_info"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.device_info</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.failure_reason"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.failure_reason</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.get_next_by_timestamp"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.get_next_by_timestamp()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.get_previous_by_timestamp"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.get_previous_by_timestamp()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.id"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.id</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.ip_address"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.ip_address</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.objects"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.objects</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.status"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.status</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.timestamp"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.timestamp</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.user"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.user</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.AuthenticationLog.user_id"><code class="docutils literal notranslate"><span class="pre">AuthenticationLog.user_id</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth"><code class="docutils literal notranslate"><span class="pre">BiometricAuth</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.DoesNotExist</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.MultipleObjectsReturned</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.auth_type"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.auth_type</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.biometric_data"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.biometric_data</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.created_at"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.created_at</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.get_next_by_created_at"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.get_next_by_created_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.get_previous_by_created_at"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.get_previous_by_created_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.id"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.id</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.is_active"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.is_active</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.last_used"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.last_used</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.objects"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.objects</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.user"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.user</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.BiometricAuth.user_id"><code class="docutils literal notranslate"><span class="pre">BiometricAuth.user_id</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification"><code class="docutils literal notranslate"><span class="pre">OTPVerification</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">OTPVerification.DoesNotExist</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">OTPVerification.MultipleObjectsReturned</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.created_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.created_at</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.expires_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.expires_at</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.get_next_by_created_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.get_next_by_created_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.get_next_by_expires_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.get_next_by_expires_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.get_previous_by_created_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.get_previous_by_created_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.get_previous_by_expires_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.get_previous_by_expires_at()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.id"><code class="docutils literal notranslate"><span class="pre">OTPVerification.id</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.is_used"><code class="docutils literal notranslate"><span class="pre">OTPVerification.is_used</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.objects"><code class="docutils literal notranslate"><span class="pre">OTPVerification.objects</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.otp"><code class="docutils literal notranslate"><span class="pre">OTPVerification.otp</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.purpose"><code class="docutils literal notranslate"><span class="pre">OTPVerification.purpose</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.user"><code class="docutils literal notranslate"><span class="pre">OTPVerification.user</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.user_id"><code class="docutils literal notranslate"><span class="pre">OTPVerification.user_id</span></code></a></li>
+<li><a class="reference internal" href="#authentication.models.OTPVerification.verified_at"><code class="docutils literal notranslate"><span class="pre">OTPVerification.verified_at</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication.serializers">authentication.serializers module</a><ul>
+<li><a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogSerializer</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer.Meta"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogSerializer.Meta</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer.Meta.fields"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogSerializer.Meta.fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer.Meta.model"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogSerializer.Meta.model</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer.Meta.read_only_fields"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogSerializer.Meta.read_only_fields</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer.Meta"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer.Meta</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer.Meta.extra_kwargs"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer.Meta.extra_kwargs</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer.Meta.fields"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer.Meta.fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer.Meta.model"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer.Meta.model</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer.Meta.read_only_fields"><code class="docutils literal notranslate"><span class="pre">BiometricAuthSerializer.Meta.read_only_fields</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer"><code class="docutils literal notranslate"><span class="pre">OTPVerificationSerializer</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer.Meta"><code class="docutils literal notranslate"><span class="pre">OTPVerificationSerializer.Meta</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer.Meta.fields"><code class="docutils literal notranslate"><span class="pre">OTPVerificationSerializer.Meta.fields</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer.Meta.model"><code class="docutils literal notranslate"><span class="pre">OTPVerificationSerializer.Meta.model</span></code></a></li>
+<li><a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer.Meta.read_only_fields"><code class="docutils literal notranslate"><span class="pre">OTPVerificationSerializer.Meta.read_only_fields</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication.services">authentication.services module</a><ul>
+<li><a class="reference internal" href="#authentication.services.BiometricHashingService"><code class="docutils literal notranslate"><span class="pre">BiometricHashingService</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.services.BiometricHashingService.create_facial_signature"><code class="docutils literal notranslate"><span class="pre">BiometricHashingService.create_facial_signature()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.services.BiometricHashingService.extract_aadhaar_data"><code class="docutils literal notranslate"><span class="pre">BiometricHashingService.extract_aadhaar_data()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.services.BiometricHashingService.hash_fingerprint"><code class="docutils literal notranslate"><span class="pre">BiometricHashingService.hash_fingerprint()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.services.BiometricHashingService.hash_image"><code class="docutils literal notranslate"><span class="pre">BiometricHashingService.hash_image()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication.tests">authentication.tests module</a></li>
+<li><a class="reference internal" href="#module-authentication.urls">authentication.urls module</a></li>
+<li><a class="reference internal" href="#module-authentication.views">authentication.views module</a><ul>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.basename"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.basename</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.description"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.description</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.detail"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.detail</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.get_queryset"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.get_queryset()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.name"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.name</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.permission_classes"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.permission_classes</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.queryset"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.queryset</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.serializer_class"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.serializer_class</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.AuthenticationLogViewSet.suffix"><code class="docutils literal notranslate"><span class="pre">AuthenticationLogViewSet.suffix</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.basename"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.basename</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.description"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.description</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.detail"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.detail</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.get_queryset"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.get_queryset()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.name"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.name</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.perform_create"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.perform_create()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.permission_classes"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.permission_classes</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.queryset"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.queryset</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.serializer_class"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.serializer_class</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.suffix"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.suffix</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.BiometricAuthViewSet.verify"><code class="docutils literal notranslate"><span class="pre">BiometricAuthViewSet.verify()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet</span></code></a><ul>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.basename"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.basename</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.description"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.description</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.detail"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.detail</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.generate"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.generate()</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.name"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.name</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.permission_classes"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.permission_classes</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.queryset"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.queryset</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.serializer_class"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.serializer_class</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.suffix"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.suffix</span></code></a></li>
+<li><a class="reference internal" href="#authentication.views.OTPVerificationViewSet.verify"><code class="docutils literal notranslate"><span class="pre">OTPVerificationViewSet.verify()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-authentication">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Reunite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">authentication package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/authentication.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="authentication-package">
+<h1>authentication package<a class="headerlink" href="#authentication-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="authentication.migrations.html">authentication.migrations package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="authentication.migrations.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authentication.migrations.html#module-authentication.migrations.0001_initial">authentication.migrations.0001_initial module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="authentication.migrations.html#authentication.migrations.0001_initial.Migration"><code class="docutils literal notranslate"><span class="pre">Migration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="authentication.migrations.html#authentication.migrations.0001_initial.Migration.dependencies"><code class="docutils literal notranslate"><span class="pre">Migration.dependencies</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="authentication.migrations.html#authentication.migrations.0001_initial.Migration.initial"><code class="docutils literal notranslate"><span class="pre">Migration.initial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="authentication.migrations.html#authentication.migrations.0001_initial.Migration.operations"><code class="docutils literal notranslate"><span class="pre">Migration.operations</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="authentication.migrations.html#module-authentication.migrations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-authentication.admin">
+<span id="authentication-admin-module"></span><h2>authentication.admin module<a class="headerlink" href="#module-authentication.admin" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.admin.</span></span><span class="sig-name descname"><span class="pre">AuthenticationLogAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/admin.html#AuthenticationLogAdmin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelAdmin</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user',</span> <span class="pre">'action',</span> <span class="pre">'timestamp',</span> <span class="pre">'status',</span> <span class="pre">'ip_address')</span></em><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin.list_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('action',</span> <span class="pre">'status',</span> <span class="pre">'timestamp')</span></em><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin.list_filter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin.media">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin.media" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('timestamp',</span> <span class="pre">'ip_address',</span> <span class="pre">'device_info')</span></em><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin.readonly_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.AuthenticationLogAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user__username',</span> <span class="pre">'ip_address',</span> <span class="pre">'failure_reason')</span></em><a class="headerlink" href="#authentication.admin.AuthenticationLogAdmin.search_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.admin.</span></span><span class="sig-name descname"><span class="pre">BiometricAuthAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/admin.html#BiometricAuthAdmin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelAdmin</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user',</span> <span class="pre">'auth_type',</span> <span class="pre">'created_at',</span> <span class="pre">'last_used',</span> <span class="pre">'is_active')</span></em><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin.list_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('auth_type',</span> <span class="pre">'is_active',</span> <span class="pre">'created_at')</span></em><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin.list_filter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin.media">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin.media" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created_at',</span> <span class="pre">'last_used')</span></em><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin.readonly_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.BiometricAuthAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user__username',)</span></em><a class="headerlink" href="#authentication.admin.BiometricAuthAdmin.search_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.admin.</span></span><span class="sig-name descname"><span class="pre">OTPVerificationAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/admin.html#OTPVerificationAdmin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelAdmin</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user',</span> <span class="pre">'purpose',</span> <span class="pre">'created_at',</span> <span class="pre">'expires_at',</span> <span class="pre">'is_used',</span> <span class="pre">'verified_at')</span></em><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin.list_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('purpose',</span> <span class="pre">'is_used',</span> <span class="pre">'created_at')</span></em><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin.list_filter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin.media">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin.media" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created_at',</span> <span class="pre">'verified_at')</span></em><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin.readonly_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.admin.OTPVerificationAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user__username',</span> <span class="pre">'otp')</span></em><a class="headerlink" href="#authentication.admin.OTPVerificationAdmin.search_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication.apps">
+<span id="authentication-apps-module"></span><h2>authentication.apps module<a class="headerlink" href="#module-authentication.apps" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.apps.AuthenticationConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.apps.</span></span><span class="sig-name descname"><span class="pre">AuthenticationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/apps.html#AuthenticationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.apps.AuthenticationConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AppConfig</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.apps.AuthenticationConfig.default_auto_field">
+<span class="sig-name descname"><span class="pre">default_auto_field</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'django.db.models.BigAutoField'</span></em><a class="headerlink" href="#authentication.apps.AuthenticationConfig.default_auto_field" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.apps.AuthenticationConfig.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'authentication'</span></em><a class="headerlink" href="#authentication.apps.AuthenticationConfig.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication.models">
+<span id="authentication-models-module"></span><h2>authentication.models module<a class="headerlink" href="#module-authentication.models" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.models.</span></span><span class="sig-name descname"><span class="pre">AuthenticationLog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ip_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failure_reason</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/models.html#AuthenticationLog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.models.AuthenticationLog" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.DoesNotExist">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.ObjectDoesNotExist" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.MultipleObjectsReturned">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.MultipleObjectsReturned" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.action">
+<span class="sig-name descname"><span class="pre">action</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.action" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.device_info">
+<span class="sig-name descname"><span class="pre">device_info</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.device_info" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.failure_reason">
+<span class="sig-name descname"><span class="pre">failure_reason</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.failure_reason" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.get_next_by_timestamp">
+<span class="sig-name descname"><span class="pre">get_next_by_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">timestamp&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.AuthenticationLog.get_next_by_timestamp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.get_previous_by_timestamp">
+<span class="sig-name descname"><span class="pre">get_previous_by_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">timestamp&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.AuthenticationLog.get_previous_by_timestamp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.ip_address">
+<span class="sig-name descname"><span class="pre">ip_address</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.ip_address" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#authentication.models.AuthenticationLog.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.status">
+<span class="sig-name descname"><span class="pre">status</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.status" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.timestamp" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.user" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.AuthenticationLog.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#authentication.models.AuthenticationLog.user_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.models.</span></span><span class="sig-name descname"><span class="pre">BiometricAuth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">biometric_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_used</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_active</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/models.html#BiometricAuth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.models.BiometricAuth" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.DoesNotExist">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.ObjectDoesNotExist" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.MultipleObjectsReturned">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.MultipleObjectsReturned" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.auth_type">
+<span class="sig-name descname"><span class="pre">auth_type</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.auth_type" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.biometric_data">
+<span class="sig-name descname"><span class="pre">biometric_data</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.biometric_data" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.created_at" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.get_next_by_created_at">
+<span class="sig-name descname"><span class="pre">get_next_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.BiometricAuth.get_next_by_created_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.get_previous_by_created_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.BiometricAuth.get_previous_by_created_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.is_active">
+<span class="sig-name descname"><span class="pre">is_active</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.is_active" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.last_used">
+<span class="sig-name descname"><span class="pre">last_used</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.last_used" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#authentication.models.BiometricAuth.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.user" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.BiometricAuth.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#authentication.models.BiometricAuth.user_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.models.</span></span><span class="sig-name descname"><span class="pre">OTPVerification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">otp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">purpose</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expires_at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_used</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verified_at</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/models.html#OTPVerification"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.models.OTPVerification" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.DoesNotExist">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#authentication.models.OTPVerification.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.ObjectDoesNotExist" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.MultipleObjectsReturned">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#authentication.models.OTPVerification.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/exceptions/#django.core.exceptions.MultipleObjectsReturned" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><a class="headerlink" href="#authentication.models.OTPVerification.created_at" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.expires_at">
+<span class="sig-name descname"><span class="pre">expires_at</span></span><a class="headerlink" href="#authentication.models.OTPVerification.expires_at" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.get_next_by_created_at">
+<span class="sig-name descname"><span class="pre">get_next_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.OTPVerification.get_next_by_created_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.get_next_by_expires_at">
+<span class="sig-name descname"><span class="pre">get_next_by_expires_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">expires_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.OTPVerification.get_next_by_expires_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.get_previous_by_created_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_created_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">created_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.OTPVerification.get_previous_by_created_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.get_previous_by_expires_at">
+<span class="sig-name descname"><span class="pre">get_previous_by_expires_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">expires_at&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#authentication.models.OTPVerification.get_previous_by_expires_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#authentication.models.OTPVerification.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.is_used">
+<span class="sig-name descname"><span class="pre">is_used</span></span><a class="headerlink" href="#authentication.models.OTPVerification.is_used" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#authentication.models.OTPVerification.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.otp">
+<span class="sig-name descname"><span class="pre">otp</span></span><a class="headerlink" href="#authentication.models.OTPVerification.otp" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.purpose">
+<span class="sig-name descname"><span class="pre">purpose</span></span><a class="headerlink" href="#authentication.models.OTPVerification.purpose" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#authentication.models.OTPVerification.user" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#authentication.models.OTPVerification.user_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.models.OTPVerification.verified_at">
+<span class="sig-name descname"><span class="pre">verified_at</span></span><a class="headerlink" href="#authentication.models.OTPVerification.verified_at" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication.serializers">
+<span id="authentication-serializers-module"></span><h2>authentication.serializers module<a class="headerlink" href="#module-authentication.serializers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.AuthenticationLogSerializer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.serializers.</span></span><span class="sig-name descname"><span class="pre">AuthenticationLogSerializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/serializers.html#AuthenticationLogSerializer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.AuthenticationLogSerializer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelSerializer</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.AuthenticationLogSerializer.Meta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="_modules/authentication/serializers.html#AuthenticationLogSerializer.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.AuthenticationLogSerializer.Meta" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.AuthenticationLogSerializer.Meta.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'__all__'</span></em><a class="headerlink" href="#authentication.serializers.AuthenticationLogSerializer.Meta.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.AuthenticationLogSerializer.Meta.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#authentication.serializers.AuthenticationLogSerializer.Meta.model" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.models.AuthenticationLog" title="authentication.models.AuthenticationLog"><code class="xref py py-class docutils literal notranslate"><span class="pre">AuthenticationLog</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.AuthenticationLogSerializer.Meta.read_only_fields">
+<span class="sig-name descname"><span class="pre">read_only_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('user',</span> <span class="pre">'timestamp',</span> <span class="pre">'ip_address',</span> <span class="pre">'device_info')</span></em><a class="headerlink" href="#authentication.serializers.AuthenticationLogSerializer.Meta.read_only_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.serializers.</span></span><span class="sig-name descname"><span class="pre">BiometricAuthSerializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/serializers.html#BiometricAuthSerializer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelSerializer</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer.Meta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="_modules/authentication/serializers.html#BiometricAuthSerializer.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer.Meta" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer.Meta.extra_kwargs">
+<span class="sig-name descname"><span class="pre">extra_kwargs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'biometric_data':</span> <span class="pre">{'write_only':</span> <span class="pre">True}}</span></em><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer.Meta.extra_kwargs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer.Meta.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('id',</span> <span class="pre">'user',</span> <span class="pre">'auth_type',</span> <span class="pre">'created_at',</span> <span class="pre">'last_used',</span> <span class="pre">'is_active')</span></em><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer.Meta.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer.Meta.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer.Meta.model" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.models.BiometricAuth" title="authentication.models.BiometricAuth"><code class="xref py py-class docutils literal notranslate"><span class="pre">BiometricAuth</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.BiometricAuthSerializer.Meta.read_only_fields">
+<span class="sig-name descname"><span class="pre">read_only_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created_at',</span> <span class="pre">'last_used')</span></em><a class="headerlink" href="#authentication.serializers.BiometricAuthSerializer.Meta.read_only_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.OTPVerificationSerializer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.serializers.</span></span><span class="sig-name descname"><span class="pre">OTPVerificationSerializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/serializers.html#OTPVerificationSerializer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.OTPVerificationSerializer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelSerializer</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.serializers.OTPVerificationSerializer.Meta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="_modules/authentication/serializers.html#OTPVerificationSerializer.Meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.serializers.OTPVerificationSerializer.Meta" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.OTPVerificationSerializer.Meta.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('id',</span> <span class="pre">'user',</span> <span class="pre">'purpose',</span> <span class="pre">'created_at',</span> <span class="pre">'expires_at',</span> <span class="pre">'is_used',</span> <span class="pre">'verified_at')</span></em><a class="headerlink" href="#authentication.serializers.OTPVerificationSerializer.Meta.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.OTPVerificationSerializer.Meta.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#authentication.serializers.OTPVerificationSerializer.Meta.model" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.models.OTPVerification" title="authentication.models.OTPVerification"><code class="xref py py-class docutils literal notranslate"><span class="pre">OTPVerification</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.serializers.OTPVerificationSerializer.Meta.read_only_fields">
+<span class="sig-name descname"><span class="pre">read_only_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('otp',</span> <span class="pre">'created_at',</span> <span class="pre">'expires_at',</span> <span class="pre">'is_used',</span> <span class="pre">'verified_at')</span></em><a class="headerlink" href="#authentication.serializers.OTPVerificationSerializer.Meta.read_only_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication.services">
+<span id="authentication-services-module"></span><h2>authentication.services module<a class="headerlink" href="#module-authentication.services" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.services.BiometricHashingService">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.services.</span></span><span class="sig-name descname"><span class="pre">BiometricHashingService</span></span><a class="reference internal" href="_modules/authentication/services.html#BiometricHashingService"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.services.BiometricHashingService" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.services.BiometricHashingService.create_facial_signature">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_facial_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">photo_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/services.html#BiometricHashingService.create_facial_signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.services.BiometricHashingService.create_facial_signature" title="Link to this definition"></a></dt>
+<dd><p>Create facial signature using OpenCV</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.services.BiometricHashingService.extract_aadhaar_data">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_aadhaar_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aadhaar_image_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/services.html#BiometricHashingService.extract_aadhaar_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.services.BiometricHashingService.extract_aadhaar_data" title="Link to this definition"></a></dt>
+<dd><p>Extract information from Aadhaar card image</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.services.BiometricHashingService.hash_fingerprint">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hash_fingerprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fingerprint_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/services.html#BiometricHashingService.hash_fingerprint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.services.BiometricHashingService.hash_fingerprint" title="Link to this definition"></a></dt>
+<dd><p>Create hash from fingerprint features</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.services.BiometricHashingService.hash_image">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hash_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/services.html#BiometricHashingService.hash_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.services.BiometricHashingService.hash_image" title="Link to this definition"></a></dt>
+<dd><p>Create a perceptual hash of an image</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication.tests">
+<span id="authentication-tests-module"></span><h2>authentication.tests module<a class="headerlink" href="#module-authentication.tests" title="Link to this heading"></a></h2>
+</section>
+<section id="module-authentication.urls">
+<span id="authentication-urls-module"></span><h2>authentication.urls module<a class="headerlink" href="#module-authentication.urls" title="Link to this heading"></a></h2>
+</section>
+<section id="module-authentication.views">
+<span id="authentication-views-module"></span><h2>authentication.views module<a class="headerlink" href="#module-authentication.views" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.views.</span></span><span class="sig-name descname"><span class="pre">AuthenticationLogViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#AuthenticationLogViewSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ReadOnlyModelViewSet</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.basename">
+<span class="sig-name descname"><span class="pre">basename</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.basename" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.detail">
+<span class="sig-name descname"><span class="pre">detail</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.detail" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#AuthenticationLogViewSet.get_queryset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Get the list of items for this view.
+This must be an iterable, and may be a queryset.
+Defaults to using <cite>self.queryset</cite>.</p>
+<p>This method should always be used rather than accessing <cite>self.queryset</cite>
+directly, as <cite>self.queryset</cite> gets evaluated only once, and those results
+are cached for all subsequent requests.</p>
+<p>You may want to override this if you need to provide different
+querysets depending on the incoming request.</p>
+<p>(Eg. return a list of items that is specific to the user)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.permission_classes">
+<span class="sig-name descname"><span class="pre">permission_classes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'rest_framework.permissions.IsAuthenticated'&gt;]</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.permission_classes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.queryset">
+<span class="sig-name descname"><span class="pre">queryset</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;QuerySet</span> <span class="pre">[]&gt;</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.queryset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.serializer_class" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.serializers.AuthenticationLogSerializer" title="authentication.serializers.AuthenticationLogSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">AuthenticationLogSerializer</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.AuthenticationLogViewSet.suffix">
+<span class="sig-name descname"><span class="pre">suffix</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.AuthenticationLogViewSet.suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.views.</span></span><span class="sig-name descname"><span class="pre">BiometricAuthViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#BiometricAuthViewSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.BiometricAuthViewSet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelViewSet</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.basename">
+<span class="sig-name descname"><span class="pre">basename</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.basename" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.detail">
+<span class="sig-name descname"><span class="pre">detail</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.detail" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#BiometricAuthViewSet.get_queryset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Get the list of items for this view.
+This must be an iterable, and may be a queryset.
+Defaults to using <cite>self.queryset</cite>.</p>
+<p>This method should always be used rather than accessing <cite>self.queryset</cite>
+directly, as <cite>self.queryset</cite> gets evaluated only once, and those results
+are cached for all subsequent requests.</p>
+<p>You may want to override this if you need to provide different
+querysets depending on the incoming request.</p>
+<p>(Eg. return a list of items that is specific to the user)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.perform_create">
+<span class="sig-name descname"><span class="pre">perform_create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serializer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#BiometricAuthViewSet.perform_create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.perform_create" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.permission_classes">
+<span class="sig-name descname"><span class="pre">permission_classes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'rest_framework.permissions.IsAuthenticated'&gt;]</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.permission_classes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.queryset">
+<span class="sig-name descname"><span class="pre">queryset</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;QuerySet</span> <span class="pre">[]&gt;</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.queryset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.serializer_class" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.serializers.BiometricAuthSerializer" title="authentication.serializers.BiometricAuthSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BiometricAuthSerializer</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.suffix">
+<span class="sig-name descname"><span class="pre">suffix</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.BiometricAuthViewSet.verify">
+<span class="sig-name descname"><span class="pre">verify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#BiometricAuthViewSet.verify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.BiometricAuthViewSet.verify" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">authentication.views.</span></span><span class="sig-name descname"><span class="pre">OTPVerificationViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#OTPVerificationViewSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.OTPVerificationViewSet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelViewSet</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.basename">
+<span class="sig-name descname"><span class="pre">basename</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.basename" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.detail">
+<span class="sig-name descname"><span class="pre">detail</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.detail" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.generate">
+<span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#OTPVerificationViewSet.generate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.generate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.permission_classes">
+<span class="sig-name descname"><span class="pre">permission_classes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'rest_framework.permissions.IsAuthenticated'&gt;]</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.permission_classes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.queryset">
+<span class="sig-name descname"><span class="pre">queryset</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;QuerySet</span> <span class="pre">[&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(1)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(2)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(4)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(5)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(6)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(8)&gt;,</span> <span class="pre">&lt;OTPVerification:</span> <span class="pre">OTPVerification</span> <span class="pre">object</span> <span class="pre">(9)&gt;]&gt;</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.queryset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.serializer_class" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#authentication.serializers.OTPVerificationSerializer" title="authentication.serializers.OTPVerificationSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">OTPVerificationSerializer</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.suffix">
+<span class="sig-name descname"><span class="pre">suffix</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="authentication.views.OTPVerificationViewSet.verify">
+<span class="sig-name descname"><span class="pre">verify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/authentication/views.html#OTPVerificationViewSet.verify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#authentication.views.OTPVerificationViewSet.verify" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-authentication">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-authentication" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Sachin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

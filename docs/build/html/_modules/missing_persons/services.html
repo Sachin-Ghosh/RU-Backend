@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>missing_persons.services &#8212; Reunite 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for missing_persons.services</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomForestClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LabelEncoder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">accounts.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FamilyMember</span><span class="p">,</span> <span class="n">User</span><span class="p">,</span> <span class="n">AadhaarProfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MissingPerson</span><span class="p">,</span> <span class="n">MissingPersonDocument</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.files.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_storage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.files.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContentFile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span><span class="p">,</span> <span class="n">ImageFont</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+<div class="viewcode-block" id="PosterService">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.PosterService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PosterService</span><span class="p">:</span>
+<div class="viewcode-block" id="PosterService.generate_poster">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.PosterService.generate_poster">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_poster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">):</span>
+        <span class="c1"># Create a simple poster (customize as needed)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;RGB&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">600</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+        <span class="n">draw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        <span class="n">font</span> <span class="o">=</span> <span class="n">ImageFont</span><span class="o">.</span><span class="n">load_default</span><span class="p">()</span>
+
+        <span class="c1"># Add text</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s2">&quot;MISSING PERSON&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">70</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Age: </span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">age_when_missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Last Seen: </span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">last_seen_location</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">110</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Contact: </span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">emergency_contact_phone</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Add photo if available</span>
+        <span class="k">if</span> <span class="n">missing_person</span><span class="o">.</span><span class="n">recent_photo</span><span class="p">:</span>
+            <span class="n">photo</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">missing_person</span><span class="o">.</span><span class="n">recent_photo</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">paste</span><span class="p">(</span><span class="n">photo</span><span class="p">,</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">))</span>
+
+        <span class="c1"># Save to buffer</span>
+        <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;PNG&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ContentFile</span><span class="p">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">case_number</span><span class="si">}</span><span class="s1">_poster.png&#39;</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="AnalyticsService">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.AnalyticsService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalyticsService</span><span class="p">:</span>
+<div class="viewcode-block" id="AnalyticsService.get_total_cases">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.AnalyticsService.get_total_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_total_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="AnalyticsService.get_cases_by_region">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.AnalyticsService.get_cases_by_region">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cases_by_region</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;last_seen_location&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="AnalyticsService.get_resolution_rate">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.AnalyticsService.get_resolution_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resolution_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status__in</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;FOUND&#39;</span><span class="p">,</span> <span class="s1">&#39;CLOSED&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">resolved</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="AnalyticsService.get_heatmap_data">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.AnalyticsService.get_heatmap_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_heatmap_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">last_known_latitude</span><span class="p">),</span> <span class="s1">&#39;lng&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">last_known_longitude</span><span class="p">),</span> <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">last_known_latitude__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">last_known_longitude__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">]</span></div>
+</div>
+
+        
+<div class="viewcode-block" id="BiometricService">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BiometricService</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">face_cascade</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CascadeClassifier</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">haarcascades</span> <span class="o">+</span> <span class="s1">&#39;haarcascade_frontalface_default.xml&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;ml_models&#39;</span><span class="p">,</span> <span class="s1">&#39;fingerprint_model.pkl&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">face_model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;ml_models&#39;</span><span class="p">,</span> <span class="s1">&#39;face_model.pkl&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sift</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">SIFT_create</span><span class="p">()</span>
+        
+        <span class="c1"># Create directory if it doesn&#39;t exist</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1"># Load or initialize models</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">face_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">face_model_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BiometricService.load_model">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.load_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.save_model">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.save_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.extract_fingerprint_features">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.extract_fingerprint_features">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_fingerprint_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">):</span>
+        <span class="c1"># Read and preprocess fingerprint image</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">))</span>
+        
+        <span class="c1"># Extract features (using SIFT for better feature detection)</span>
+        <span class="n">sift</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">SIFT_create</span><span class="p">()</span>
+        <span class="n">keypoints</span><span class="p">,</span> <span class="n">descriptors</span> <span class="o">=</span> <span class="n">sift</span><span class="o">.</span><span class="n">detectAndCompute</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">descriptors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>  <span class="c1"># Return zero vector if no features found</span>
+        
+        <span class="c1"># Return mean of descriptors as feature vector</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.extract_face_features">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.extract_face_features">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_face_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract facial features using SIFT&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Read image</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            
+            <span class="c1"># Convert to grayscale</span>
+            <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+            
+            <span class="c1"># Detect faces</span>
+            <span class="n">faces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_cascade</span><span class="o">.</span><span class="n">detectMultiScale</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+                
+            <span class="c1"># Get the largest face</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">f</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="n">face</span> <span class="o">=</span> <span class="n">gray</span><span class="p">[</span><span class="n">y</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="n">h</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="n">w</span><span class="p">]</span>
+            
+            <span class="c1"># Extract SIFT features</span>
+            <span class="n">keypoints</span><span class="p">,</span> <span class="n">descriptors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift</span><span class="o">.</span><span class="n">detectAndCompute</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">descriptors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+                
+            <span class="c1"># Return mean of descriptors as feature vector</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error extracting face features: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.compare_faces">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.compare_faces">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compare_faces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features1</span><span class="p">,</span> <span class="n">features2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two face feature vectors&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">features1</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">features2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">cosine_similarity</span><span class="p">([</span><span class="n">features1</span><span class="p">],</span> <span class="p">[</span><span class="n">features2</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.train_models">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.train_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_path</span><span class="p">):</span>
+        <span class="n">fingerprint_features</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">face_features</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Process dataset</span>
+        <span class="k">for</span> <span class="n">person_id</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">):</span>
+            <span class="n">person_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">,</span> <span class="n">person_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">person_path</span><span class="p">):</span>
+                <span class="c1"># Process fingerprints</span>
+                <span class="n">fingerprint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">person_path</span><span class="p">,</span> <span class="s1">&#39;fingerprint.jpg&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fingerprint_path</span><span class="p">):</span>
+                    <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_fingerprint_features</span><span class="p">(</span><span class="n">fingerprint_path</span><span class="p">)</span>
+                    <span class="n">fingerprint_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">person_id</span><span class="p">)</span>
+                
+                <span class="c1"># Process face images</span>
+                <span class="n">face_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">person_path</span><span class="p">,</span> <span class="s1">&#39;face.jpg&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">face_path</span><span class="p">):</span>
+                    <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_face_features</span><span class="p">(</span><span class="n">face_path</span><span class="p">)</span>
+                    <span class="n">face_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="c1"># Train models</span>
+        <span class="k">if</span> <span class="n">fingerprint_features</span><span class="p">:</span>
+            <span class="n">encoded_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fingerprint_features</span><span class="p">,</span> <span class="n">encoded_labels</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model_path</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">face_features</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">face_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">face_features</span><span class="p">,</span> <span class="n">encoded_labels</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">face_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_model_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.match_fingerprint">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.match_fingerprint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_fingerprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fingerprint_path</span><span class="p">):</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_fingerprint_features</span><span class="p">(</span><span class="n">fingerprint_path</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+        <span class="n">predicted_label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">prediction</span><span class="p">)])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">predicted_label</span><span class="p">,</span> <span class="n">confidence</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.match_face">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.match_face">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_face</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">face_path</span><span class="p">):</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_face_features</span><span class="p">(</span><span class="n">face_path</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+        <span class="n">predicted_label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">prediction</span><span class="p">)])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">predicted_label</span><span class="p">,</span> <span class="n">confidence</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.extract_features_from_file">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.extract_features_from_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_features_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract features from an uploaded file&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Read file content</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            
+            <span class="c1"># Convert to numpy array</span>
+            <span class="n">nparr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+            
+            <span class="c1"># Decode image</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imdecode</span><span class="p">(</span><span class="n">nparr</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_COLOR</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="c1"># Convert to grayscale</span>
+            <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+            
+            <span class="c1"># Detect faces</span>
+            <span class="n">faces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">face_cascade</span><span class="o">.</span><span class="n">detectMultiScale</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+                
+            <span class="c1"># Get the largest face</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">f</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="n">face</span> <span class="o">=</span> <span class="n">gray</span><span class="p">[</span><span class="n">y</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="n">h</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="n">w</span><span class="p">]</span>
+            
+            <span class="c1"># Extract SIFT features</span>
+            <span class="n">keypoints</span><span class="p">,</span> <span class="n">descriptors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift</span><span class="o">.</span><span class="n">detectAndCompute</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">descriptors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+                
+            <span class="c1"># Reset file pointer</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            
+            <span class="c1"># Return mean of descriptors as feature vector</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error extracting features: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BiometricService.compare_features">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.BiometricService.compare_features">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compare_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features1</span><span class="p">,</span> <span class="n">features2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two feature vectors&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">features1</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">features2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">cosine_similarity</span><span class="p">([</span><span class="n">features1</span><span class="p">],</span> <span class="p">[</span><span class="n">features2</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+</div>
+
+
+<div class="viewcode-block" id="MissingPersonService">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingPersonService</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span> <span class="o">=</span> <span class="n">BiometricService</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MissingPersonService.search_by_aadhaar">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.search_by_aadhaar">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_by_aadhaar</span><span class="p">(</span><span class="n">aadhaar_number</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search for missing person by Aadhaar number&quot;&quot;&quot;</span>
+        <span class="n">aadhaar_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">aadhaar_number</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">aadhaar_number_hash</span><span class="o">=</span><span class="n">aadhaar_hash</span><span class="p">)</span> <span class="o">|</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">registered_user__aadhaar_profile__aadhaar_number_hash</span><span class="o">=</span><span class="n">aadhaar_hash</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.search_by_name">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.search_by_name">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search for missing person by name&quot;&quot;&quot;</span>
+        <span class="n">name_parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="n">name</span><span class="p">)</span> <span class="o">|</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">registered_user__first_name__in</span><span class="o">=</span><span class="n">name_parts</span><span class="p">)</span> <span class="o">|</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">registered_user__last_name__in</span><span class="o">=</span><span class="n">name_parts</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.match_faces">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.match_faces">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_faces</span><span class="p">(</span><span class="n">photo_path</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.6</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Match face against database of missing persons&quot;&quot;&quot;</span>
+        <span class="n">biometric_service</span> <span class="o">=</span> <span class="n">BiometricService</span><span class="p">()</span>
+        <span class="n">query_features</span> <span class="o">=</span> <span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_face_features</span><span class="p">(</span><span class="n">photo_path</span><span class="p">)</span>
+        
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;MISSING&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">person</span><span class="o">.</span><span class="n">facial_encoding</span><span class="p">:</span>
+                <span class="n">similarity</span> <span class="o">=</span> <span class="n">biometric_service</span><span class="o">.</span><span class="n">compare_faces</span><span class="p">(</span>
+                    <span class="n">query_features</span><span class="p">,</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">person</span><span class="o">.</span><span class="n">facial_encoding</span><span class="p">)</span>
+                <span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                    <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s1">&#39;person&#39;</span><span class="p">:</span> <span class="n">person</span><span class="p">,</span>
+                        <span class="s1">&#39;confidence&#39;</span><span class="p">:</span> <span class="n">similarity</span>
+                    <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.update_location">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.update_location">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_location</span><span class="p">(</span><span class="n">missing_person</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update last known location of missing person&quot;&quot;&quot;</span>
+        <span class="n">location_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+            <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+            <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">}</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_person</span><span class="o">.</span><span class="n">last_known_location</span><span class="p">:</span>
+            <span class="n">missing_person</span><span class="o">.</span><span class="n">last_known_location</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;history&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+        
+        <span class="n">missing_person</span><span class="o">.</span><span class="n">last_known_location</span><span class="p">[</span><span class="s1">&#39;history&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">location_data</span><span class="p">)</span>
+        <span class="n">missing_person</span><span class="o">.</span><span class="n">last_known_location</span><span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">location_data</span>
+        <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.get_family_member_details">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.get_family_member_details">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_family_member_details</span><span class="p">(</span><span class="n">family_member_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get details of a family member for pre-filling&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">member</span> <span class="o">=</span> <span class="n">FamilyMember</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">family_member_id</span><span class="p">)</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">member</span><span class="o">.</span><span class="n">user</span>
+            <span class="n">aadhaar_profile</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;aadhaar_profile&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">(),</span>
+                <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="n">calculate_age</span><span class="p">(</span><span class="n">aadhaar_profile</span><span class="o">.</span><span class="n">dob</span><span class="p">)</span> <span class="k">if</span> <span class="n">aadhaar_profile</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="n">aadhaar_profile</span><span class="o">.</span><span class="n">gender</span> <span class="k">if</span> <span class="n">aadhaar_profile</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;blood_group&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">blood_group</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;blood_group&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;photo&#39;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span><span class="o">.</span><span class="n">url</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;aadhaar_number_hash&#39;</span><span class="p">:</span> <span class="n">aadhaar_profile</span><span class="o">.</span><span class="n">aadhaar_number_hash</span> <span class="k">if</span> <span class="n">aadhaar_profile</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="n">FamilyMember</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.handle_document_uploads">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.handle_document_uploads">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_document_uploads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">documents_data</span><span class="p">,</span> <span class="n">document_files</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle document uploads and verification&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">doc_data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">documents_data</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">doc_file</span> <span class="o">=</span> <span class="n">document_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">doc_file</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Create document record</span>
+                <span class="n">document</span> <span class="o">=</span> <span class="n">MissingPersonDocument</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">missing_person</span><span class="o">=</span><span class="n">missing_person</span><span class="p">,</span>
+                    <span class="n">document_type</span><span class="o">=</span><span class="n">doc_data</span><span class="p">[</span><span class="s1">&#39;document_type&#39;</span><span class="p">],</span>
+                    <span class="n">document</span><span class="o">=</span><span class="n">doc_file</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                    <span class="n">uploaded_by</span><span class="o">=</span><span class="n">user</span>
+                <span class="p">)</span>
+
+                <span class="c1"># If document is Aadhaar, verify against database</span>
+                <span class="k">if</span> <span class="n">doc_data</span><span class="p">[</span><span class="s1">&#39;document_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ID_PROOF&#39;</span> <span class="ow">and</span> <span class="s1">&#39;Aadhaar&#39;</span> <span class="ow">in</span> <span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">verify_aadhaar_document</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error uploading document </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    
+<div class="viewcode-block" id="MissingPersonService.process_recent_photo">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.process_recent_photo">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_recent_photo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process recent photo for facial recognition&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">missing_person</span><span class="o">.</span><span class="n">recent_photo</span><span class="p">:</span>
+                <span class="c1"># Extract features from recent photo</span>
+                <span class="n">recent_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_face_features</span><span class="p">(</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">recent_photo</span><span class="o">.</span><span class="n">path</span>
+                <span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">recent_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">facial_encoding</span> <span class="o">=</span> <span class="n">recent_features</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    
+                    <span class="c1"># Match against user profile photos</span>
+                    <span class="n">best_match</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">highest_confidence</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+                    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">profile_picture__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span><span class="p">:</span>
+                            <span class="n">profile_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_face_features</span><span class="p">(</span>
+                                <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span><span class="o">.</span><span class="n">path</span>
+                            <span class="p">)</span>
+                            
+                            <span class="k">if</span> <span class="n">profile_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="k">continue</span>
+
+                            <span class="n">confidence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">compare_faces</span><span class="p">(</span>
+                                <span class="n">recent_features</span><span class="p">,</span> 
+                                <span class="n">profile_features</span>
+                            <span class="p">)</span>
+                            
+                            <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">highest_confidence</span><span class="p">:</span>
+                                <span class="n">highest_confidence</span> <span class="o">=</span> <span class="n">confidence</span>
+                                <span class="n">best_match</span> <span class="o">=</span> <span class="n">user</span>
+
+                    <span class="c1"># Update missing person record if match found</span>
+                    <span class="k">if</span> <span class="n">best_match</span> <span class="ow">and</span> <span class="n">highest_confidence</span> <span class="o">&gt;</span> <span class="mf">0.6</span><span class="p">:</span>
+                        <span class="n">missing_person</span><span class="o">.</span><span class="n">is_registered_user</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">missing_person</span><span class="o">.</span><span class="n">registered_user</span> <span class="o">=</span> <span class="n">best_match</span>
+                        <span class="n">missing_person</span><span class="o">.</span><span class="n">facial_match_confidence</span> <span class="o">=</span> <span class="n">highest_confidence</span>
+                        <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing recent photo: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.process_photos">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.process_photos">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_photos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">,</span> <span class="n">recent_photo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_photos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process photos for facial recognition&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recent_photo</span><span class="p">:</span>
+                <span class="c1"># Extract features from recent photo</span>
+                <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_features_from_file</span><span class="p">(</span><span class="n">recent_photo</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">facial_encoding</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+                    <span class="c1"># Match against profile photos</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">match_against_profiles</span><span class="p">(</span><span class="n">missing_person</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+
+            <span class="c1"># Save additional photos</span>
+            <span class="k">if</span> <span class="n">additional_photos</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">photo</span> <span class="ow">in</span> <span class="n">additional_photos</span><span class="p">:</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="n">default_storage</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;missing_persons/additional_photos/</span><span class="si">{</span><span class="n">missing_person</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">photo</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                        <span class="n">ContentFile</span><span class="p">(</span><span class="n">photo</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                    <span class="p">)</span>
+                    <span class="n">missing_person</span><span class="o">.</span><span class="n">additional_photos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing photos: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.match_against_profiles">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.match_against_profiles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_against_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Match features against user profile photos&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">accounts.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+            <span class="n">best_match</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">highest_confidence</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">profile_picture__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span><span class="p">:</span>
+                    <span class="c1"># Read profile picture</span>
+                    <span class="k">with</span> <span class="n">user</span><span class="o">.</span><span class="n">profile_picture</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">profile_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_features_from_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                        
+                        <span class="k">if</span> <span class="n">profile_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">confidence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">compare_features</span><span class="p">(</span>
+                                <span class="n">features</span><span class="p">,</span> 
+                                <span class="n">profile_features</span>
+                            <span class="p">)</span>
+                            
+                            <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">highest_confidence</span><span class="p">:</span>
+                                <span class="n">highest_confidence</span> <span class="o">=</span> <span class="n">confidence</span>
+                                <span class="n">best_match</span> <span class="o">=</span> <span class="n">user</span>
+
+            <span class="k">if</span> <span class="n">best_match</span> <span class="ow">and</span> <span class="n">highest_confidence</span> <span class="o">&gt;</span> <span class="mf">0.6</span><span class="p">:</span>
+                <span class="n">missing_person</span><span class="o">.</span><span class="n">is_registered_user</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">missing_person</span><span class="o">.</span><span class="n">registered_user</span> <span class="o">=</span> <span class="n">best_match</span>
+                <span class="n">missing_person</span><span class="o">.</span><span class="n">facial_match_confidence</span> <span class="o">=</span> <span class="n">highest_confidence</span>
+                <span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error matching against profiles: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.process_documents">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.process_documents">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_person</span><span class="p">,</span> <span class="n">documents_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process and save documents&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">doc_data</span> <span class="ow">in</span> <span class="n">documents_data</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">doc_data</span><span class="p">:</span>
+                    <span class="n">document</span> <span class="o">=</span> <span class="n">MissingPersonDocument</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="n">missing_person</span><span class="o">=</span><span class="n">missing_person</span><span class="p">,</span>
+                        <span class="n">document_type</span><span class="o">=</span><span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;document_type&#39;</span><span class="p">),</span>
+                        <span class="n">description</span><span class="o">=</span><span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                        <span class="n">document</span><span class="o">=</span><span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;document&#39;</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># If it&#39;s an Aadhaar document, try to match</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;document_type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;ID_PROOF&#39;</span> <span class="ow">and</span> 
+                        <span class="s1">&#39;Aadhaar&#39;</span> <span class="ow">in</span> <span class="n">doc_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">match_aadhaar_document</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing documents: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.match_aadhaar_document">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.match_aadhaar_document">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_aadhaar_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Match Aadhaar document against database&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">accounts.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AadhaarProfile</span>
+            
+            <span class="k">with</span> <span class="n">document</span><span class="o">.</span><span class="n">document</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">doc_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_features_from_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">doc_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">best_match</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">highest_confidence</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+                    <span class="k">for</span> <span class="n">profile</span> <span class="ow">in</span> <span class="n">AadhaarProfile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">profile</span><span class="o">.</span><span class="n">aadhaar_image</span><span class="p">:</span>
+                            <span class="k">with</span> <span class="n">profile</span><span class="o">.</span><span class="n">aadhaar_image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                                <span class="n">profile_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">extract_features_from_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                                
+                                <span class="k">if</span> <span class="n">profile_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                    <span class="n">confidence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">biometric_service</span><span class="o">.</span><span class="n">compare_features</span><span class="p">(</span>
+                                        <span class="n">doc_features</span><span class="p">,</span>
+                                        <span class="n">profile_features</span>
+                                    <span class="p">)</span>
+                                    
+                                    <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">highest_confidence</span><span class="p">:</span>
+                                        <span class="n">highest_confidence</span> <span class="o">=</span> <span class="n">confidence</span>
+                                        <span class="n">best_match</span> <span class="o">=</span> <span class="n">profile</span>
+
+                    <span class="k">if</span> <span class="n">best_match</span> <span class="ow">and</span> <span class="n">highest_confidence</span> <span class="o">&gt;</span> <span class="mf">0.6</span><span class="p">:</span>
+                        <span class="n">document</span><span class="o">.</span><span class="n">missing_person</span><span class="o">.</span><span class="n">is_registered_user</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">document</span><span class="o">.</span><span class="n">missing_person</span><span class="o">.</span><span class="n">registered_user</span> <span class="o">=</span> <span class="n">best_match</span><span class="o">.</span><span class="n">user</span>
+                        <span class="n">document</span><span class="o">.</span><span class="n">missing_person</span><span class="o">.</span><span class="n">aadhaar_number_hash</span> <span class="o">=</span> <span class="n">best_match</span><span class="o">.</span><span class="n">aadhaar_number_hash</span>
+                        <span class="n">document</span><span class="o">.</span><span class="n">missing_person</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error matching Aadhaar document: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.get_all_missing_persons">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.get_all_missing_persons">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_missing_persons</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">search_query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get list of all missing persons with optional filtering, searching and sorting</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            filters (dict): Filter parameters (e.g., status, gender, age_range)</span>
+<span class="sd">            search_query (str): Search term for name or case number</span>
+<span class="sd">            sort_by (str): Field to sort by (e.g., &#39;created_at&#39;, &#39;-created_at&#39; for descending)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            QuerySet: Filtered and sorted queryset of missing persons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+        <span class="c1"># Apply filters</span>
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">):</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">filters</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">])</span>
+            
+            <span class="k">if</span> <span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gender&#39;</span><span class="p">):</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">gender</span><span class="o">=</span><span class="n">filters</span><span class="p">[</span><span class="s1">&#39;gender&#39;</span><span class="p">])</span>
+            
+            <span class="k">if</span> <span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;age_range&#39;</span><span class="p">):</span>
+                <span class="n">min_age</span><span class="p">,</span> <span class="n">max_age</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;age_range&#39;</span><span class="p">]</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">age_when_missing__range</span><span class="o">=</span><span class="p">(</span><span class="n">min_age</span><span class="p">,</span> <span class="n">max_age</span><span class="p">))</span>
+            
+            <span class="k">if</span> <span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;location&#39;</span><span class="p">):</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">last_seen_location__icontains</span><span class="o">=</span><span class="n">filters</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+                <span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;date_range&#39;</span><span class="p">):</span>
+                <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span> <span class="o">=</span> <span class="n">filters</span><span class="p">[</span><span class="s1">&#39;date_range&#39;</span><span class="p">]</span>
+                <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">last_seen_date__range</span><span class="o">=</span><span class="p">(</span><span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Apply search</span>
+        <span class="k">if</span> <span class="n">search_query</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="n">search_query</span><span class="p">)</span> <span class="o">|</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">case_number__icontains</span><span class="o">=</span><span class="n">search_query</span><span class="p">)</span> <span class="o">|</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">aadhaar_number__icontains</span><span class="o">=</span><span class="n">search_query</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Apply sorting</span>
+        <span class="k">if</span> <span class="n">sort_by</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">sort_by</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Default sorting by created date, newest first</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-created_at&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">queryset</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonService.get_missing_persons_statistics">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.services.MissingPersonService.get_missing_persons_statistics">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_missing_persons_statistics</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get statistics about missing persons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_cases</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">active_cases</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;MISSING&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">found_cases</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;FOUND&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        
+        <span class="c1"># Gender distribution</span>
+        <span class="n">gender_stats</span> <span class="o">=</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;gender&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">count</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Count</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Age group distribution</span>
+        <span class="n">age_stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;children&#39;</span><span class="p">:</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">age_when_missing__lt</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;adults&#39;</span><span class="p">:</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">age_when_missing__gte</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
+                <span class="n">age_when_missing__lt</span><span class="o">=</span><span class="mi">60</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="s1">&#39;elderly&#39;</span><span class="p">:</span> <span class="n">MissingPerson</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">age_when_missing__gte</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;total_cases&#39;</span><span class="p">:</span> <span class="n">total_cases</span><span class="p">,</span>
+            <span class="s1">&#39;active_cases&#39;</span><span class="p">:</span> <span class="n">active_cases</span><span class="p">,</span>
+            <span class="s1">&#39;found_cases&#39;</span><span class="p">:</span> <span class="n">found_cases</span><span class="p">,</span>
+            <span class="s1">&#39;gender_distribution&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">gender_stats</span><span class="p">),</span>
+            <span class="s1">&#39;age_distribution&#39;</span><span class="p">:</span> <span class="n">age_stats</span>
+        <span class="p">}</span> </div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Reunite</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Sachin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>authentication.services &#8212; Reunite 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for authentication.services</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytesseract</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">deepface</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepFace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># Set Tesseract path explicitly</span>
+<span class="n">pytesseract</span><span class="o">.</span><span class="n">pytesseract</span><span class="o">.</span><span class="n">tesseract_cmd</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;C:\Program Files\Tesseract-OCR\tesseract.exe&#39;</span>  <span class="c1"># Adjust this path</span>
+
+<div class="viewcode-block" id="BiometricHashingService">
+<a class="viewcode-back" href="../../authentication.html#authentication.services.BiometricHashingService">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BiometricHashingService</span><span class="p">:</span>
+<div class="viewcode-block" id="BiometricHashingService.hash_image">
+<a class="viewcode-back" href="../../authentication.html#authentication.services.BiometricHashingService.hash_image">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hash_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a perceptual hash of an image&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Convert image to grayscale and resize</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Could not read image file&quot;</span><span class="p">)</span>
+                
+            <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+            <span class="n">resized</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+            
+            <span class="c1"># Calculate mean and create binary hash</span>
+            <span class="n">avg</span> <span class="o">=</span> <span class="n">resized</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">resized</span> <span class="o">&gt;</span> <span class="n">avg</span>
+            
+            <span class="c1"># Convert binary array to hash string</span>
+            <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error hashing image: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BiometricHashingService.hash_fingerprint">
+<a class="viewcode-back" href="../../authentication.html#authentication.services.BiometricHashingService.hash_fingerprint">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hash_fingerprint</span><span class="p">(</span><span class="n">fingerprint_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create hash from fingerprint features&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Read and preprocess fingerprint</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">fingerprint_path</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Could not read fingerprint file&quot;</span><span class="p">)</span>
+                
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+            
+            <span class="c1"># Extract SIFT features</span>
+            <span class="n">sift</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">SIFT_create</span><span class="p">()</span>
+            <span class="n">keypoints</span><span class="p">,</span> <span class="n">descriptors</span> <span class="o">=</span> <span class="n">sift</span><span class="o">.</span><span class="n">detectAndCompute</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">descriptors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Create hash from feature descriptors</span>
+                <span class="n">feature_bytes</span> <span class="o">=</span> <span class="n">descriptors</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">feature_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error hashing fingerprint: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BiometricHashingService.extract_aadhaar_data">
+<a class="viewcode-back" href="../../authentication.html#authentication.services.BiometricHashingService.extract_aadhaar_data">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_aadhaar_data</span><span class="p">(</span><span class="n">aadhaar_image_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract information from Aadhaar card image&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Verify Tesseract installation</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pytesseract</span><span class="o">.</span><span class="n">pytesseract</span><span class="o">.</span><span class="n">tesseract_cmd</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tesseract not found at: </span><span class="si">{</span><span class="n">pytesseract</span><span class="o">.</span><span class="n">pytesseract</span><span class="o">.</span><span class="n">tesseract_cmd</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Read and preprocess image</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">aadhaar_image_path</span><span class="p">)</span>
+            
+            <span class="c1"># Enhance image for better OCR</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">)</span>  <span class="c1"># Convert to grayscale</span>
+            
+            <span class="c1"># Use custom OCR configuration for better text extraction</span>
+            <span class="n">custom_config</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;--oem 3 --psm 6 -l eng&#39;</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">pytesseract</span><span class="o">.</span><span class="n">image_to_string</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">custom_config</span><span class="p">)</span>
+            
+            <span class="c1"># Print extracted text for debugging</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Extracted text:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+            
+            <span class="c1"># Extract Aadhaar number (12 digits)</span>
+            <span class="n">aadhaar_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;\d</span><span class="si">{4}</span><span class="s1">\s?\d</span><span class="si">{4}</span><span class="s1">\s?\d</span><span class="si">{4}</span><span class="s1">&#39;</span>
+            <span class="n">aadhaar_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">aadhaar_pattern</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+            <span class="n">aadhaar_number</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aadhaar_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="k">if</span> <span class="n">aadhaar_matches</span> <span class="k">else</span> <span class="kc">None</span>
+            
+            <span class="c1"># Extract name (updated pattern)</span>
+            <span class="n">name_patterns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">r</span><span class="s1">&#39;(?:^|\n)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Ghosh|GHOSH))&#39;</span><span class="p">,</span>  <span class="c1"># Original pattern</span>
+                <span class="sa">r</span><span class="s1">&#39;([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)&#39;</span><span class="p">,</span>  <span class="c1"># Three word name</span>
+                <span class="sa">r</span><span class="s1">&#39;([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)&#39;</span><span class="p">,</span>  <span class="c1"># Two/Three word name</span>
+                <span class="sa">r</span><span class="s1">&#39;Sarit\s+Helaram\s+Ghosh&#39;</span><span class="p">,</span>  <span class="c1"># Exact match</span>
+                <span class="sa">r</span><span class="s1">&#39;([A-Za-z]+\s+[A-Za-z]+\s+[A-Za-z]+)&#39;</span>  <span class="c1"># Any three words</span>
+            <span class="p">]</span>
+            
+            <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">name_patterns</span><span class="p">:</span>
+                <span class="n">name_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name_matches</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">name_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">break</span>
+            
+            <span class="c1"># Extract year of birth</span>
+            <span class="n">year_patterns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">r</span><span class="s1">&#39;Year of Birth\s*:\s*(\d</span><span class="si">{4}</span><span class="s1">)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Birth\s*:\s*(\d</span><span class="si">{4}</span><span class="s1">)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Birth.*?(\d</span><span class="si">{4}</span><span class="s1">)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;(\d</span><span class="si">{4}</span><span class="s1">)&#39;</span>  <span class="c1"># Last resort: any 4 digits that could be a year</span>
+            <span class="p">]</span>
+            
+            <span class="n">year_of_birth</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">year_patterns</span><span class="p">:</span>
+                <span class="n">year_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">year_matches</span><span class="p">:</span>
+                    <span class="c1"># Validate year is reasonable (e.g., between 1900 and current year)</span>
+                    <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="n">year_matches</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="mi">1900</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span><span class="p">:</span>
+                            <span class="n">year_of_birth</span> <span class="o">=</span> <span class="n">year</span>
+                            <span class="k">break</span>
+                <span class="k">if</span> <span class="n">year_of_birth</span><span class="p">:</span>
+                    <span class="k">break</span>
+            
+            <span class="c1"># Extract gender</span>
+            <span class="n">gender_patterns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">r</span><span class="s1">&#39;(?:Male|Female)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;(?:MALE|FEMALE)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;(?:M|F)ale&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Gender\s*:\s*(Male|Female)&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;(?:पुरुष|Male)&#39;</span><span class="p">,</span>  <span class="c1"># Include Hindi text</span>
+            <span class="p">]</span>
+            
+            <span class="n">gender</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">gender_patterns</span><span class="p">:</span>
+                <span class="n">gender_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">gender_matches</span><span class="p">:</span>
+                    <span class="n">gender</span> <span class="o">=</span> <span class="n">gender_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">break</span>
+            
+            <span class="c1"># Print extracted data for debugging</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Extracted data:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Year of Birth: </span><span class="si">{</span><span class="n">year_of_birth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gender: </span><span class="si">{</span><span class="n">gender</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aadhaar: </span><span class="si">{</span><span class="n">aadhaar_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Validate extracted data</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="n">aadhaar_number</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">year_of_birth</span><span class="p">,</span> <span class="n">gender</span><span class="p">]):</span>
+                <span class="n">missing_fields</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">aadhaar_number</span><span class="p">:</span> <span class="n">missing_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Aadhaar number&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span> <span class="n">missing_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">year_of_birth</span><span class="p">:</span> <span class="n">missing_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Year of birth&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">gender</span><span class="p">:</span> <span class="n">missing_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Gender&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required fields: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Convert gender to single character</span>
+            <span class="n">gender_code</span> <span class="o">=</span> <span class="s1">&#39;M&#39;</span> <span class="k">if</span> <span class="n">gender</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;M&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;F&#39;</span>
+            
+            <span class="c1"># Create date of birth</span>
+            <span class="n">dob</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">year_of_birth</span><span class="si">}</span><span class="s2">-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;aadhaar_number&#39;</span><span class="p">:</span> <span class="n">aadhaar_number</span><span class="p">,</span>
+                <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s1">&#39;dob&#39;</span><span class="p">:</span> <span class="n">dob</span><span class="p">,</span>
+                <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="n">gender_code</span><span class="p">,</span>
+                <span class="s1">&#39;document_hash&#39;</span><span class="p">:</span> <span class="n">BiometricHashingService</span><span class="o">.</span><span class="n">hash_image</span><span class="p">(</span><span class="n">aadhaar_image_path</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error extracting Aadhaar data: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="BiometricHashingService.create_facial_signature">
+<a class="viewcode-back" href="../../authentication.html#authentication.services.BiometricHashingService.create_facial_signature">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_facial_signature</span><span class="p">(</span><span class="n">photo_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create facial signature using OpenCV&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Read image</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">photo_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Could not read image file&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Convert to grayscale</span>
+            <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+            
+            <span class="c1"># Load face cascade classifier</span>
+            <span class="n">face_cascade</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CascadeClassifier</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">haarcascades</span> <span class="o">+</span> <span class="s1">&#39;haarcascade_frontalface_default.xml&#39;</span><span class="p">)</span>
+            
+            <span class="c1"># Detect faces</span>
+            <span class="n">faces</span> <span class="o">=</span> <span class="n">face_cascade</span><span class="o">.</span><span class="n">detectMultiScale</span><span class="p">(</span>
+                <span class="n">gray</span><span class="p">,</span>
+                <span class="n">scaleFactor</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span>
+                <span class="n">minNeighbors</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">minSize</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+            <span class="p">)</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># If no face detected, use the whole image</span>
+                <span class="n">face_features</span> <span class="o">=</span> <span class="n">gray</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Use the first detected face</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">faces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">face_features</span> <span class="o">=</span> <span class="n">gray</span><span class="p">[</span><span class="n">y</span><span class="p">:</span><span class="n">y</span><span class="o">+</span><span class="n">h</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="n">w</span><span class="p">]</span>
+            
+            <span class="c1"># Resize to standard size</span>
+            <span class="n">face_features</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">face_features</span><span class="p">,</span> <span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">))</span>
+            
+            <span class="c1"># Apply some feature extraction</span>
+            <span class="c1"># Using HOG (Histogram of Oriented Gradients)</span>
+            <span class="n">win_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+            <span class="n">block_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+            <span class="n">block_stride</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+            <span class="n">cell_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+            <span class="n">nbins</span> <span class="o">=</span> <span class="mi">9</span>
+            <span class="n">hog</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">HOGDescriptor</span><span class="p">(</span><span class="n">win_size</span><span class="p">,</span> <span class="n">block_size</span><span class="p">,</span> <span class="n">block_stride</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">nbins</span><span class="p">)</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">hog</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">face_features</span><span class="p">)</span>
+            
+            <span class="c1"># Create hash from features</span>
+            <span class="n">feature_bytes</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">feature_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating facial signature: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Return a basic image hash as fallback</span>
+            <span class="k">return</span> <span class="n">BiometricHashingService</span><span class="o">.</span><span class="n">hash_image</span><span class="p">(</span><span class="n">photo_path</span><span class="p">)</span> </div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Reunite</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Sachin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

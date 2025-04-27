@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>missing_persons.admin &#8212; Reunite 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for missing_persons.admin</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">admin</span>
+
+<span class="c1"># Register your models here.</span>
+<span class="c1"># missing_persons/admin.py</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MissingPerson</span><span class="p">,</span> <span class="n">MissingPersonDocument</span>
+
+<div class="viewcode-block" id="MissingPersonDocumentInline">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonDocumentInline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingPersonDocumentInline</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">TabularInline</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">MissingPersonDocument</span>
+    <span class="n">extra</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">readonly_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;uploaded_by&#39;</span><span class="p">,</span> <span class="s1">&#39;uploaded_at&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingPersonAdmin">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonAdmin">[docs]</a>
+<span class="nd">@admin</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MissingPerson</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingPersonAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;case_number&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;age_when_missing&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;last_seen_date&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;priority_level&#39;</span><span class="p">,</span><span class="s1">&#39;reporter&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_ngo&#39;</span>
+    <span class="p">)</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;gender&#39;</span><span class="p">,</span> <span class="s1">&#39;priority_level&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;last_seen_date&#39;</span><span class="p">,</span><span class="s1">&#39;reporter&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_ngo&#39;</span>
+    <span class="p">)</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;case_number&#39;</span><span class="p">,</span> <span class="s1">&#39;fir_number&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;last_seen_location&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span><span class="s1">&#39;reporter&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_ngo&#39;</span>
+    <span class="p">)</span>
+    <span class="n">readonly_fields</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;case_number&#39;</span><span class="p">,</span> <span class="s1">&#39;facial_encoding&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;updated_at&#39;</span><span class="p">,</span> <span class="s1">&#39;reporter&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_ngo&#39;</span>
+    <span class="p">)</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;assign_to_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assign_to_ngo&#39;</span><span class="p">,</span> <span class="s1">&#39;close_cases&#39;</span><span class="p">]</span>
+    <span class="n">inlines</span> <span class="o">=</span> <span class="p">[</span><span class="n">MissingPersonDocumentInline</span><span class="p">]</span>
+
+    <span class="n">fieldsets</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;Basic Information&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;case_number&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;age_when_missing&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;date_of_birth&#39;</span><span class="p">,</span> <span class="s1">&#39;gender&#39;</span><span class="p">,</span> <span class="s1">&#39;blood_group&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;nationality&#39;</span>
+            <span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Physical Characteristics&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;height&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">,</span> <span class="s1">&#39;complexion&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;identifying_marks&#39;</span><span class="p">,</span> <span class="s1">&#39;physical_attributes&#39;</span>
+            <span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Images &amp; Biometric&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;recent_photo&#39;</span><span class="p">,</span> <span class="s1">&#39;additional_photos&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;facial_encoding&#39;</span>
+            <span class="p">),</span>
+            <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;collapse&#39;</span><span class="p">,)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Missing Details&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;last_seen_location&#39;</span><span class="p">,</span> <span class="s1">&#39;last_seen_date&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;last_seen_details&#39;</span><span class="p">,</span> <span class="s1">&#39;last_seen_wearing&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;possible_locations&#39;</span>
+            <span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Case Information&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;fir_number&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;priority_level&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;reporter&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_officer&#39;</span><span class="p">,</span> <span class="s1">&#39;assigned_ngo&#39;</span>
+            <span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Medical Information&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;medical_conditions&#39;</span><span class="p">,</span> <span class="s1">&#39;medications&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;collapse&#39;</span><span class="p">,)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Contact Information&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s1">&#39;emergency_contact_name&#39;</span><span class="p">,</span> <span class="s1">&#39;emergency_contact_phone&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;emergency_contact_relation&#39;</span><span class="p">,</span> <span class="s1">&#39;secondary_contact_name&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;secondary_contact_phone&#39;</span>
+            <span class="p">)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Family Information&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;family_group&#39;</span><span class="p">,</span> <span class="s1">&#39;family_member&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;collapse&#39;</span><span class="p">,)</span>
+        <span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;Metadata&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;updated_at&#39;</span><span class="p">,</span> <span class="s1">&#39;last_modified_by&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;classes&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;collapse&#39;</span><span class="p">,)</span>
+        <span class="p">}),</span>
+
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="MissingPersonAdmin.assign_to_officer">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonAdmin.assign_to_officer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_to_officer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">officer</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s1">&#39;LAW_ENFORCEMENT&#39;</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">officer</span><span class="p">:</span>
+            <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">assigned_officer</span><span class="o">=</span><span class="n">officer</span><span class="p">)</span></div>
+
+    <span class="n">assign_to_officer</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">&quot;Assign to current officer&quot;</span>
+
+<div class="viewcode-block" id="MissingPersonAdmin.assign_to_ngo">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonAdmin.assign_to_ngo">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_to_ngo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">ngo</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s1">&#39;NGO&#39;</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">ngo</span><span class="p">:</span>
+            <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">assigned_ngo</span><span class="o">=</span><span class="n">ngo</span><span class="p">)</span></div>
+
+    <span class="n">assign_to_ngo</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">&quot;Assign to current NGO&quot;</span>
+
+<div class="viewcode-block" id="MissingPersonAdmin.close_cases">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonAdmin.close_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">queryset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;CLOSED&#39;</span><span class="p">)</span></div>
+
+    <span class="n">close_cases</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="s2">&quot;Close selected cases&quot;</span>
+    
+<div class="viewcode-block" id="MissingPersonAdmin.save_model">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonAdmin.save_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">change</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">change</span><span class="p">:</span>  <span class="c1"># If creating new object</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">reporter</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">last_modified_by</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">change</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="MissingPersonDocumentAdmin">
+<a class="viewcode-back" href="../../missing_persons.html#missing_persons.admin.MissingPersonDocumentAdmin">[docs]</a>
+<span class="nd">@admin</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MissingPersonDocument</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingPersonDocumentAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;missing_person&#39;</span><span class="p">,</span> <span class="s1">&#39;document_type&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;uploaded_by&#39;</span><span class="p">,</span> <span class="s1">&#39;uploaded_at&#39;</span><span class="p">,</span>   
+    <span class="p">)</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;document_type&#39;</span><span class="p">,</span> <span class="s1">&#39;uploaded_at&#39;</span><span class="p">)</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;missing_person__name&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">)</span>
+    <span class="n">readonly_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;uploaded_by&#39;</span><span class="p">,</span> <span class="s1">&#39;uploaded_at&#39;</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Reunite</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Sachin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
