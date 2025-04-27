@@ -1,12 +1,22 @@
 services:
   - type: web
-    name: RU-Backend
+    name: ru-backend
     env: python
     buildCommand: "chmod +x build.sh && ./build.sh"
-    startCommand: "gunicorn core.wsgi:application --bind=0.0.0.0:$PORT --workers=2 --threads=4 --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout 120"
+    startCommand: gunicorn core.wsgi:application
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.11  # Changed to match available version
+        value: 3.11.0
+      - key: WEB_CONCURRENCY
+        value: 2
+    scaling:
+      minInstances: 1
+      maxInstances: 1
+    resources:
+      cpu: 1x
+      memory: 2048
+      storage: 512
+    envVars:
       - key: PORT
         value: 8000
       - key: DATABASE_URL

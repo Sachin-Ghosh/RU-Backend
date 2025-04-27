@@ -7,6 +7,11 @@ import re
 import os
 from deepface import DeepFace
 from datetime import datetime
+import base64
+from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Set Tesseract path explicitly
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Adjust this path
@@ -220,4 +225,32 @@ class BiometricHashingService:
         except Exception as e:
             print(f"Error creating facial signature: {str(e)}")
             # Return a basic image hash as fallback
-            return BiometricHashingService.hash_image(photo_path) 
+            return BiometricHashingService.hash_image(photo_path)
+
+    @staticmethod
+    def hash_biometric_data(biometric_data: str) -> str:
+        """Hash biometric data using SHA-256."""
+        return hashlib.sha256(biometric_data.encode()).hexdigest()
+
+    @staticmethod
+    def verify_face(image1_path: str, image2_path: str) -> tuple[bool, float]:
+        """
+        Verify if two face images match.
+        Returns (is_match, confidence_score)
+        """
+        try:
+            # Lazy import DeepFace to avoid loading it unless necessary
+            from deepface import DeepFace
+            result = DeepFace.verify(
+                img1_path=image1_path,
+                img2_path=image2_path,
+                enforce_detection=False,
+                model_name='VGG-Face'
+            )
+            return result.get('verified', False), result.get('distance', 1.0)
+        except ImportError:
+            logger.error("DeepFace not available. Face verification disabled.")
+            return False, 1.0
+        except Exception as e:
+            logger.error(f"Face verification failed: {str(e)}")
+            return False, 1.0 
