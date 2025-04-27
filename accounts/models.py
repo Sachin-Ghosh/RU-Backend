@@ -5,7 +5,6 @@ import uuid
 from django.utils.translation import gettext_lazy as _
 
 def document_upload_path(instance, filename):
-    # Generate path for document uploads
     return f'documents/organization_docs/{filename}'
 
 class User(AbstractUser):
