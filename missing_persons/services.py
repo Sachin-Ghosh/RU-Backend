@@ -19,7 +19,6 @@ from django.db import models
 
 class PosterService:
     def generate_poster(self, missing_person):
-        # Create a simple poster (customize as needed)
         img = Image.new('RGB', (400, 600), color='white')
         draw = ImageDraw.Draw(img)
         font = ImageFont.load_default()
