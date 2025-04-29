@@ -9,11 +9,9 @@ from django.conf import settings
 import uuid
 
 def document_upload_path(instance, filename):
-    # Generate path for document uploads
     return f'documents/{instance.missing_person.case_number}/{filename}'
 
 def photo_upload_path(instance, filename):
-    # Generate path for photo uploads
     return f'photos/{instance.case_number}/{filename}'
 
 class MissingPerson(models.Model):
