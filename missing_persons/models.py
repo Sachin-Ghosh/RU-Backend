@@ -1,8 +1,4 @@
 from django.db import models
-# from django.contrib.gis.db import models as gis_models
-# from django.contrib.gis.geos import Point
-# from django.contrib.gis.measure import D
-# from django.contrib.postgres.fields import ArrayField
 from accounts.models import User
 import os
 from django.conf import settings
