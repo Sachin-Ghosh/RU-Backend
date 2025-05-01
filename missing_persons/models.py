@@ -75,9 +75,9 @@ class MissingPerson(models.Model):
     
 
     recent_photo = models.ImageField(upload_to=photo_upload_path, null=True, blank=True)
-    additional_photos = models.JSONField(default=list)  # Store multiple photo URLs
-    facial_encoding = models.JSONField(null=True)  # Store facial recognition data
-    poster_image = models.ImageField(upload_to='posters/', null=True, blank=True)  # Generated poster
+    additional_photos = models.JSONField(default=list) 
+    facial_encoding = models.JSONField(null=True)
+    poster_image = models.ImageField(upload_to='posters/', null=True, blank=True)
     
     # Missing Details
     last_seen_location = models.CharField(max_length=255)
