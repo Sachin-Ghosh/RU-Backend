@@ -62,8 +62,7 @@ class MissingPerson(models.Model):
     )
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
     nationality = models.CharField(max_length=50, default='Indian',blank=True)
-    
-    # Physical Characteristics
+
     height = models.FloatField(default=0)
     weight = models.FloatField(default=0)
     complexion = models.CharField(
@@ -74,7 +73,7 @@ class MissingPerson(models.Model):
     identifying_marks = models.TextField(blank=True)
     physical_attributes = models.JSONField(default=dict,blank=True)  # Store additional attributes
     
-    # Images and Biometric Data
+
     recent_photo = models.ImageField(upload_to=photo_upload_path, null=True, blank=True)
     additional_photos = models.JSONField(default=list)  # Store multiple photo URLs
     facial_encoding = models.JSONField(null=True)  # Store facial recognition data
