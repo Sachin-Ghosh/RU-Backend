@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 
-# Create your models here.
 
 class SurveillanceFootage(models.Model):
     FOOTAGE_TYPE_CHOICES = [
