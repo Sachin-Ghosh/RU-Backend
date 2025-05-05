@@ -9,8 +9,6 @@ from .tasks import process_surveillance_footage
 from missing_persons.models import MissingPerson
 from math import radians, sin, cos, sqrt, asin
 
-# Create your views here.
-
 class SurveillanceFootageViewSet(viewsets.ModelViewSet):
     queryset = SurveillanceFootage.objects.all()
     serializer_class = SurveillanceFootageSerializer
