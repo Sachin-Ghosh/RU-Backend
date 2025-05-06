@@ -25,16 +25,6 @@ class MissingPersonSerializer(serializers.ModelSerializer):
     documents = MissingPersonDocumentSerializer(many=True, read_only=True)
     recent_photo = serializers.ImageField(required=False, allow_null=True)
     distance = serializers.SerializerMethodField()
-    # reporter_name = serializers.CharField(source='reporter.get_full_name', read_only=True)
-    # assigned_officer_name = serializers.CharField(
-    #     source='assigned_officer.get_full_name',
-    #     read_only=True
-    # )
-    # age_current = serializers.SerializerMethodField()
-    # physical_attributes = serializers.JSONField(required=False)
-    # last_seen_wearing = serializers.CharField(required=False)
-    # possible_locations = serializers.JSONField(required=False)
-    # additional_photos = serializers.JSONField(required=False)
 
     class Meta:
         model = MissingPerson
