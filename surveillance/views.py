@@ -15,7 +15,6 @@ class SurveillanceFootageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         footage = serializer.save(uploaded_by=self.request.user)
-        # Process footage asynchronously
         process_surveillance_footage.delay(footage.id)
 
     @action(detail=False, methods=['POST'])
