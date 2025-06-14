@@ -13,7 +13,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Set Tesseract path explicitly
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Adjust this path
 
 class BiometricHashingService:
