@@ -20,7 +20,6 @@ class BiometricHashingService:
     def hash_image(image_path):
         """Create a perceptual hash of an image"""
         try:
-            # Convert image to grayscale and resize
             img = cv2.imread(image_path)
             if img is None:
                 raise ValueError("Could not read image file")
