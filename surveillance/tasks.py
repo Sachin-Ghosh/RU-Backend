@@ -20,7 +20,6 @@ def process_surveillance_footage(footage_id, missing_person_id=None):
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
-        # Process every nth frame (e.g., every 30th frame)
         frame_interval = 30
         matches = []
         
